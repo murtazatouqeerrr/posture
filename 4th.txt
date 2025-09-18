@@ -1,0 +1,60 @@
+"Act as a senior front-end developer and UI/UX designer. Our Posture Perfect CRM SPA is fully functional but looks outdated. We need a complete visual overhaul to create a modern, clean, and professional healthcare application. We will use the Tailwind CSS framework for rapid, beautiful styling.
+
+1. Integration of Tailwind CSS:
+
+First, add the Tailwind CSS CDN script tag to the <head> of our single index.html SPA file. Use the latest version.
+
+Instruct me to use the standalone Tailwind CLI to generate a full stylesheet if we need more control later, but for now, the CDN is sufficient for development.
+
+2. Modern Layout & Structure:
+Refactor the entire index.html structure to use a modern layout:
+
+A sleek sidebar navigation on the left for main links (Dashboard, Patients, Calendar, Admin) instead of a top bar. The sidebar should collapse to icons on smaller screens.
+
+A top header bar that shows the current user's name, role, and a logout button.
+
+A main content area with plenty of white space, subtle shadows, and rounded corners on cards. This is where our #app container will be.
+
+Use a clean, professional color scheme. Suggest a primary color like a calming blue (#3B82F6) or teal (#0F766E) for accents, with a mostly white and light gray background.
+
+3. Component Styling with Tailwind:
+We need to completely restyle every single component using Tailwind's utility classes. Generate the code for:
+
+Login/Signup Forms: These should be centered beautifully on the page with a card-like design (bg-white, shadow, rounded-lg, p-8), stylish input fields, and a prominent button.
+
+Data Tables: Style the main patient/contact table with alternating row colors (hover:bg-gray-50), clear headers, and styled action buttons (view, edit) using icons from Heroicons or similar.
+
+Cards for Analytics: On the dashboard and admin panel, display key metrics (Total Patients, Revenue, etc.) in individual cards with a number, a label, and an icon. Use grid for a responsive layout.
+
+Forms: All forms (adding a patient, logging a session) should be well-spaced, with elegant labels and inputs. Use border, rounded, and focus:ring classes for inputs.
+
+Buttons: Create a consistent style for primary buttons (bg-blue-600 hover:bg-blue-700 text-white), secondary buttons, and danger buttons (red for delete actions).
+
+Tabs: Style the Admin Dashboard tabs as a modern tabbed interface with a bottom border indicator for the active tab.
+
+4. Dashboard & Admin Panel UI:
+
+Main Dashboard: Create a layout that shows the data table and maybe a small summary card of today's appointments.
+
+Admin Dashboard: Make this visually impressive. The user management table should be sleek. The analytics should use Chart.js but be contained in well-styled cards with headers. Ensure the charts are responsive.
+
+5. Interactions & Feedback:
+
+Add subtle animations for transitions (e.g., transition and hover: classes on buttons).
+
+Implement modern modals for actions like "Edit Patient" or "Confirm Delete" instead of navigating to a new page. Use a hidden div that becomes visible with flex and fixed positioning.
+
+Add loading spinners (using Tailwind's animation classes) whenever data is being fetched from the API.
+
+6. Responsive Design:
+Ensure everything looks great on mobile, tablet, and desktop. Use Tailwind's responsive breakpoints (e.g., md:flex, text-sm md:text-base) to adjust the layout, especially the sidebar navigation.
+
+Please provide the complete refactored code:
+
+The fully styled index.html with the new layout (sidebar, header, main content area).
+
+The complete JavaScript (app.js) updated to work with the new HTML structure and to render all dynamically loaded content with the correct Tailwind CSS classes.
+
+Instructions on how to integrate Chart.js for the admin analytics charts within this new styled environment.
+
+The final result should be a CRM that looks like a modern SaaS product (comparable to systems like Calendly or Circle.so), not a 1990s database interface. Focus on clarity, spacing, typography, and a professional color scheme."

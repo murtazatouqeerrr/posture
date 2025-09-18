@@ -1,0 +1,14 @@
+Financial & Business Intelligence Modules
+Purpose: Track the financial health of the business and understand what's working.
+
+What to Add:
+
+Simple Invoicing & Payments:
+
+Command to QChat: "Generate a table invoices linked to the contacts table. It should have columns for amount, status ('Sent', 'Paid', 'Overdue'), due_date, and services_rendered. Create a basic HTML invoice template and an endpoint to generate a PDF for each invoice."
+
+Reporting Dashboard:
+
+Command to QChat: "Create a new dashboard page that shows key metrics. Write API endpoints that return JSON data for: 1) Total number of leads per month (chart), 2) Lead conversion rate (%), 3) Revenue per month. Then generate chart.js code to visually display this data on the dashboard."
+
+Treatment Plan Templates: Standardize the offers. Create templates for "6-Week Posture Correction Plan" or "1-on-1 Online Coaching Package" that can be quickly sent to leads after their assessment.
