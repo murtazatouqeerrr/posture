@@ -1,233 +1,226 @@
-class ReportsManager {
-    constructor() {
-        this.charts = {};
-        this.init();
-    }
+// Reports Management - Fixed Data Fetching
+let reportsData = {
+    leadsPerMonth: [],
+    conversionRate: [],
+    revenuePerMonth: [],
+    financialAnalytics: null
+};
 
-    async init() {
-        await this.loadReports();
-        this.setupEventListeners();
-    }
+async function loadReportsView() {
+    console.log('📊 Loading reports view...');
+    
+    try {
+        // Fetch all report data
+        const [leadsResponse, conversionResponse, revenueResponse, analyticsResponse] = await Promise.all([
+            fetch('/api/reports/leads-per-month'),
+            fetch('/api/reports/conversion-rate'),
+            fetch('/api/reports/revenue-per-month'),
+            fetch('/api/admin/analytics/financial')
+        ]);
 
-    setupEventListeners() {
-        document.getElementById('refreshReports').onclick = () => this.loadReports();
-    }
-
-    async loadReports() {
-        try {
-            await Promise.all([
-                this.loadLeadsChart(),
-                this.loadConversionChart(),
-                this.loadRevenueChart(),
-                this.loadRecentActivity()
-            ]);
-        } catch (error) {
-            console.error('Error loading reports:', error);
-            this.showErrorMessage('Failed to load reports');
+        if (!leadsResponse.ok || !conversionResponse.ok || !revenueResponse.ok || !analyticsResponse.ok) {
+            throw new Error('Failed to fetch report data');
         }
-    }
 
-    async loadLeadsChart() {
-        try {
-            const response = await fetch('/api/reports/leads-per-month');
-            const data = await response.json();
-            
-            const ctx = document.getElementById('leadsChart').getContext('2d');
-            
-            if (this.charts.leads) {
-                this.charts.leads.destroy();
-            }
-            
-            this.charts.leads = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.map(d => d.month),
-                    datasets: [{
-                        label: 'New Leads',
-                        data: data.map(d => d.count),
-                        borderColor: 'rgb(59, 130, 246)',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Leads Per Month'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    }
-                }
-            });
-        } catch (error) {
-            console.error('Error loading leads chart:', error);
-        }
+        reportsData.leadsPerMonth = await leadsResponse.json();
+        reportsData.conversionRate = await conversionResponse.json();
+        reportsData.revenuePerMonth = await revenueResponse.json();
+        reportsData.financialAnalytics = await analyticsResponse.json();
+        
+        console.log('✅ Reports data loaded successfully');
+        renderReportsView();
+    } catch (error) {
+        console.error('❌ Reports loading error:', error);
+        document.getElementById('app').innerHTML = `
+            <div class="p-6">
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <h3 class="text-red-800 font-medium">Error Loading Reports</h3>
+                    <p class="text-red-700 mt-2">${error.message}</p>
+                    <button onclick="loadReportsView()" class="mt-3 bg-red-100 px-3 py-2 rounded text-red-800 hover:bg-red-200">
+                        Retry
+                    </button>
+                </div>
+            </div>
+        `;
     }
+}
 
-    async loadConversionChart() {
-        try {
-            const response = await fetch('/api/reports/conversion-rate');
-            const data = await response.json();
-            
-            const ctx = document.getElementById('conversionChart').getContext('2d');
-            
-            if (this.charts.conversion) {
-                this.charts.conversion.destroy();
-            }
-            
-            this.charts.conversion = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Converted', 'Not Converted'],
-                    datasets: [{
-                        data: [data.converted, data.total - data.converted],
-                        backgroundColor: [
-                            'rgb(34, 197, 94)',
-                            'rgb(239, 68, 68)'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: `Conversion Rate: ${data.rate}%`
-                        }
-                    }
-                }
-            });
-        } catch (error) {
-            console.error('Error loading conversion chart:', error);
-        }
-    }
+function renderReportsView() {
+    const analytics = reportsData.financialAnalytics;
+    
+    const app = document.getElementById('app');
+    app.innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">Business Reports & Analytics</h2>
+                <p class="text-gray-600">Comprehensive insights into your practice performance</p>
+            </div>
 
-    async loadRevenueChart() {
-        try {
-            const response = await fetch('/api/reports/revenue-per-month');
-            const data = await response.json();
-            
-            const ctx = document.getElementById('revenueChart').getContext('2d');
-            
-            if (this.charts.revenue) {
-                this.charts.revenue.destroy();
-            }
-            
-            this.charts.revenue = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(d => d.month),
-                    datasets: [{
-                        label: 'Revenue ($)',
-                        data: data.map(d => d.revenue),
-                        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-                        borderColor: 'rgb(34, 197, 94)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Monthly Revenue'
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value;
-                                }
+            <!-- Financial Overview Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-green-100 rounded-lg">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Total Revenue</p>
+                            <p class="text-2xl font-semibold text-gray-900">$${analytics.totalRevenue}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                            <p class="text-2xl font-semibold text-gray-900">$${analytics.monthlyRevenue}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Total Invoices</p>
+                            <p class="text-2xl font-semibold text-gray-900">${analytics.totalInvoices}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-2 bg-yellow-100 rounded-lg">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Active Subscriptions</p>
+                            <p class="text-2xl font-semibold text-gray-900">${analytics.activeSubscriptions}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Revenue Trends Chart -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Revenue Trends</h3>
+                    <div class="h-64">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Revenue by Service Chart -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Revenue by Service</h3>
+                    <div class="h-64">
+                        <canvas id="serviceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Invoice Status Overview -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Invoice Status Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="text-center p-4 bg-green-50 rounded-lg">
+                        <p class="text-2xl font-bold text-green-600">${analytics.paidInvoices}</p>
+                        <p class="text-sm text-green-700">Paid Invoices</p>
+                    </div>
+                    <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                        <p class="text-2xl font-bold text-yellow-600">${analytics.pendingInvoices}</p>
+                        <p class="text-sm text-yellow-700">Pending Invoices</p>
+                    </div>
+                    <div class="text-center p-4 bg-red-50 rounded-lg">
+                        <p class="text-2xl font-bold text-red-600">${analytics.overdueInvoices}</p>
+                        <p class="text-sm text-red-700">Overdue Invoices</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Initialize charts after DOM is ready
+    setTimeout(() => {
+        initializeCharts();
+    }, 100);
+}
+
+function initializeCharts() {
+    const analytics = reportsData.financialAnalytics;
+    
+    // Revenue Trends Chart
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: analytics.monthlyTrends.map(item => item.month),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: analytics.monthlyTrends.map(item => item.revenue),
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value;
                             }
                         }
                     }
                 }
-            });
-        } catch (error) {
-            console.error('Error loading revenue chart:', error);
-        }
+            }
+        });
     }
-
-    async loadRecentActivity() {
-        try {
-            const [contactsRes, appointmentsRes, invoicesRes] = await Promise.all([
-                fetch('/api/contacts?limit=5'),
-                fetch('/api/appointments?limit=5'),
-                fetch('/api/invoices?limit=5')
-            ]);
-            
-            const contacts = await contactsRes.json();
-            const appointments = await appointmentsRes.json();
-            const invoices = await invoicesRes.json();
-            
-            const activityList = document.getElementById('recentActivity');
-            const activities = [];
-            
-            contacts.slice(0, 3).forEach(contact => {
-                activities.push({
-                    type: 'contact',
-                    text: `New patient: ${contact.first_name} ${contact.last_name}`,
-                    time: contact.created_at || 'Recently'
-                });
-            });
-            
-            appointments.slice(0, 3).forEach(appointment => {
-                activities.push({
-                    type: 'appointment',
-                    text: `Appointment scheduled for ${appointment.appointment_date}`,
-                    time: appointment.created_at || 'Recently'
-                });
-            });
-            
-            invoices.slice(0, 3).forEach(invoice => {
-                activities.push({
-                    type: 'invoice',
-                    text: `Invoice #${invoice.id} created ($${invoice.amount})`,
-                    time: invoice.created_at || 'Recently'
-                });
-            });
-            
-            activityList.innerHTML = activities.slice(0, 10).map(activity => `
-                <div class="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded">
-                    <div class="flex-shrink-0">
-                        ${this.getActivityIcon(activity.type)}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm text-gray-900">${activity.text}</p>
-                        <p class="text-xs text-gray-500">${activity.time}</p>
-                    </div>
-                </div>
-            `).join('');
-            
-        } catch (error) {
-            console.error('Error loading recent activity:', error);
-        }
-    }
-
-    getActivityIcon(type) {
-        const icons = {
-            contact: '<div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path></svg></div>',
-            appointment: '<div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 7h12v9H4V7z"></path></svg></div>',
-            invoice: '<div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-yellow-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6z"></path></svg></div>'
-        };
-        return icons[type] || icons.contact;
-    }
-
-    showErrorMessage(message) {
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+    
+    // Revenue by Service Chart
+    const serviceCtx = document.getElementById('serviceChart');
+    if (serviceCtx) {
+        new Chart(serviceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: analytics.revenueByService.map(item => item.service),
+                datasets: [{
+                    data: analytics.revenueByService.map(item => parseFloat(item.revenue)),
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
     }
 }
-
-const reportsManager = new ReportsManager();

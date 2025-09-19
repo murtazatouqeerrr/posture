@@ -1,245 +1,454 @@
-class CalendarManager {
-    constructor() {
-        this.appointments = [];
-        this.contacts = [];
-        this.currentDate = new Date();
-        this.init();
-    }
+// Calendar Management
+let currentCalendarDate = new Date();
+let appointments = [];
+let contacts = [];
 
-    async init() {
-        await this.loadContacts();
-        await this.loadAppointments();
-        this.renderCalendar();
-        this.setupEventListeners();
-    }
+async function loadCalendarView() {
+    console.log('📅 Loading calendar view...');
+    
+    try {
+        // Fetch appointments and contacts
+        const [appointmentsResponse, contactsResponse] = await Promise.all([
+            fetch('/api/appointments'),
+            fetch('/api/contacts')
+        ]);
 
-    async loadContacts() {
-        try {
-            const response = await fetch('/api/contacts');
-            this.contacts = await response.json();
-        } catch (error) {
-            console.error('Error loading contacts:', error);
+        if (!appointmentsResponse.ok) {
+            throw new Error(`Failed to fetch appointments: ${appointmentsResponse.status}`);
         }
-    }
-
-    async loadAppointments() {
-        try {
-            const response = await fetch('/api/appointments');
-            this.appointments = await response.json();
-        } catch (error) {
-            console.error('Error loading appointments:', error);
+        if (!contactsResponse.ok) {
+            throw new Error(`Failed to fetch contacts: ${contactsResponse.status}`);
         }
+
+        appointments = await appointmentsResponse.json();
+        contacts = await contactsResponse.json();
+        
+        console.log(`✅ Loaded ${appointments.length} appointments and ${contacts.length} contacts`);
+
+        renderCalendarView();
+    } catch (error) {
+        console.error('❌ Calendar loading error:', error);
+        document.getElementById('app').innerHTML = `
+            <div class="p-6">
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <h3 class="text-red-800 font-medium">Error Loading Calendar</h3>
+                    <p class="text-red-700 mt-2">${error.message}</p>
+                    <button onclick="loadCalendarView()" class="mt-3 bg-red-100 px-3 py-2 rounded text-red-800 hover:bg-red-200">
+                        Retry
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function renderCalendarView() {
+    const app = document.getElementById('app');
+    app.innerHTML = `
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900">Calendar</h2>
+                    <p class="text-gray-600">Manage appointments and schedule</p>
+                </div>
+                <button id="addAppointmentBtn" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark">
+                    Add Appointment
+                </button>
+            </div>
+
+            <!-- Calendar Navigation -->
+            <div class="bg-white rounded-lg shadow mb-6">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <div class="flex items-center space-x-4">
+                        <button id="prevMonth" class="p-2 hover:bg-gray-100 rounded">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <h3 id="currentMonth" class="text-lg font-semibold text-gray-900"></h3>
+                        <button id="nextMonth" class="p-2 hover:bg-gray-100 rounded">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <button id="todayBtn" class="px-3 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                        Today
+                    </button>
+                </div>
+                
+                <!-- Calendar Grid -->
+                <div class="p-4">
+                    <div class="grid grid-cols-7 gap-1 mb-2">
+                        <div class="p-2 text-center text-sm font-medium text-gray-500">Sun</div>
+                        <div class="p-2 text-center text-sm font-medium text-gray-500">Mon</div>
+                        <div class="p-2 text-center text-sm font-medium text-gray-500">Tue</div>
+                        <div class="p-2 text-center text-sm font-medium text-gray-500">Wed</div>
+                        <div class="p-2 text-center text-sm font-medium text-gray-500">Thu</div>
+                        <div class="p-2 text-center text-sm font-medium text-gray-500">Fri</div>
+                        <div class="p-2 text-center text-sm font-medium text-gray-500">Sat</div>
+                    </div>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1">
+                        <!-- Calendar days will be inserted here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming Appointments -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Upcoming Appointments</h3>
+                </div>
+                <div id="upcomingAppointments" class="divide-y divide-gray-200">
+                    <!-- Appointments will be listed here -->
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Setup event listeners
+    setupCalendarEventListeners();
+    
+    // Render calendar
+    renderCalendar();
+    renderUpcomingAppointments();
+}
+
+function setupCalendarEventListeners() {
+    // Add appointment button
+    const addAppointmentBtn = document.getElementById('addAppointmentBtn');
+    if (addAppointmentBtn) {
+        addAppointmentBtn.addEventListener('click', showAddAppointmentModal);
     }
 
-    setupEventListeners() {
-        document.getElementById('addAppointmentBtn').onclick = () => this.showAddModal();
-        document.getElementById('prevMonth').onclick = () => this.changeMonth(-1);
-        document.getElementById('nextMonth').onclick = () => this.changeMonth(1);
-        
-        document.querySelector('.close-appointment').onclick = () => this.hideModal();
-        document.querySelector('.close-edit-appointment').onclick = () => this.hideEditModal();
-        
-        document.getElementById('appointmentForm').onsubmit = (e) => {
-            e.preventDefault();
-            this.addAppointment();
-        };
-        
-        document.getElementById('editAppointmentForm').onsubmit = (e) => {
-            e.preventDefault();
-            this.updateAppointment();
-        };
+    // Calendar navigation
+    const prevMonth = document.getElementById('prevMonth');
+    const nextMonth = document.getElementById('nextMonth');
+    const todayBtn = document.getElementById('todayBtn');
+
+    if (prevMonth) {
+        prevMonth.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+        });
     }
 
-    showAddModal() {
-        const modal = document.getElementById('appointmentModal');
-        const contactSelect = document.getElementById('contactId');
+    if (nextMonth) {
+        nextMonth.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+        });
+    }
+
+    if (todayBtn) {
+        todayBtn.addEventListener('click', () => {
+            currentCalendarDate = new Date();
+            renderCalendar();
+        });
+    }
+}
+
+function renderCalendar() {
+    const currentMonth = document.getElementById('currentMonth');
+    const calendarGrid = document.getElementById('calendarGrid');
+    
+    if (!currentMonth || !calendarGrid) return;
+
+    // Update month display
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+    currentMonth.textContent = `${monthNames[currentCalendarDate.getMonth()]} ${currentCalendarDate.getFullYear()}`;
+
+    // Calculate calendar days
+    const firstDay = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth(), 1);
+    const lastDay = new Date(currentCalendarDate.getFullYear(), currentCalendarDate.getMonth() + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+    // Clear calendar grid
+    calendarGrid.innerHTML = '';
+
+    // Generate calendar days
+    for (let i = 0; i < 42; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
         
-        contactSelect.innerHTML = '<option value="">Select Patient</option>' +
-            this.contacts.map(c => `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`).join('');
+        const isCurrentMonth = date.getMonth() === currentCalendarDate.getMonth();
+        const isToday = date.toDateString() === new Date().toDateString();
         
-        modal.style.display = 'block';
+        // Get appointments for this date
+        const dateStr = date.toISOString().split('T')[0];
+        const dayAppointments = appointments.filter(apt => apt.appointment_date === dateStr);
+        
+        const dayElement = document.createElement('div');
+        dayElement.className = `p-2 min-h-[80px] border border-gray-200 ${isCurrentMonth ? 'bg-white' : 'bg-gray-50'} ${isToday ? 'bg-blue-50 border-blue-200' : ''} hover:bg-gray-50 cursor-pointer`;
+        
+        dayElement.innerHTML = `
+            <div class="text-sm ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'} ${isToday ? 'font-bold text-blue-600' : ''} mb-1">
+                ${date.getDate()}
+            </div>
+            <div class="space-y-1">
+                ${dayAppointments.slice(0, 2).map(apt => `
+                    <div class="text-xs bg-primary text-white px-1 py-0.5 rounded truncate" title="${apt.first_name} ${apt.last_name} - ${apt.service_type}">
+                        ${apt.appointment_time} ${apt.first_name} ${apt.last_name}
+                    </div>
+                `).join('')}
+                ${dayAppointments.length > 2 ? `<div class="text-xs text-gray-500">+${dayAppointments.length - 2} more</div>` : ''}
+            </div>
+        `;
+        
+        dayElement.addEventListener('click', () => showDayAppointments(date, dayAppointments));
+        calendarGrid.appendChild(dayElement);
+    }
+}
+
+function renderUpcomingAppointments() {
+    const upcomingAppointments = document.getElementById('upcomingAppointments');
+    if (!upcomingAppointments) return;
+
+    // Get upcoming appointments (next 7 days)
+    const today = new Date();
+    const nextWeek = new Date();
+    nextWeek.setDate(today.getDate() + 7);
+    
+    const upcoming = appointments.filter(apt => {
+        const aptDate = new Date(apt.appointment_date);
+        return aptDate >= today && aptDate <= nextWeek;
+    }).sort((a, b) => new Date(a.appointment_date + ' ' + a.appointment_time) - new Date(b.appointment_date + ' ' + b.appointment_time));
+
+    if (upcoming.length === 0) {
+        upcomingAppointments.innerHTML = `
+            <div class="p-6 text-center text-gray-500">
+                <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
+                </svg>
+                <p>No upcoming appointments</p>
+            </div>
+        `;
+        return;
     }
 
-    hideModal() {
-        document.getElementById('appointmentModal').style.display = 'none';
-        document.getElementById('appointmentForm').reset();
+    upcomingAppointments.innerHTML = upcoming.map(apt => `
+        <div class="p-4 hover:bg-gray-50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium">${apt.first_name.charAt(0)}${apt.last_name.charAt(0)}</span>
+                    </div>
+                    <div>
+                        <div class="text-sm font-medium text-gray-900">${apt.first_name} ${apt.last_name}</div>
+                        <div class="text-sm text-gray-500">${apt.service_type}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm font-medium text-gray-900">${formatDate(apt.appointment_date)}</div>
+                    <div class="text-sm text-gray-500">${apt.appointment_time}</div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(apt.status)}">
+                        ${apt.status}
+                    </span>
+                    <button onclick="editAppointment(${apt.id})" class="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function showAddAppointmentModal() {
+    console.log('➕ Showing add appointment modal...');
+    
+    if (contacts.length === 0) {
+        showNotification('No patients available. Please add patients first.', 'warning');
+        return;
     }
 
-    hideEditModal() {
-        document.getElementById('editAppointmentModal').style.display = 'none';
-    }
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Add New Appointment</h3>
+                <button id="closeModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="appointmentForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                        <select id="contactId" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                            <option value="">Select a patient</option>
+                            ${contacts.map(contact => `
+                                <option value="${contact.id}">${contact.first_name} ${contact.last_name}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="appointmentDate" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                        <input type="time" id="appointmentTime" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Service Type</label>
+                        <select id="serviceType" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                            <option value="">Select service type</option>
+                            <option value="Initial Assessment">Initial Assessment</option>
+                            <option value="Physical Therapy">Physical Therapy</option>
+                            <option value="Follow-up">Follow-up</option>
+                            <option value="Consultation">Consultation</option>
+                            <option value="Posture Assessment">Posture Assessment</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                        <textarea id="appointmentNotes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary" placeholder="Additional notes..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3 mt-6">
+                    <button type="submit" class="flex-1 bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+                        Create Appointment
+                    </button>
+                    <button type="button" id="cancelBtn" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
 
-    async addAppointment() {
-        const formData = new FormData(document.getElementById('appointmentForm'));
-        const appointmentData = {
-            contact_id: formData.get('contactId'),
-            appointment_date: formData.get('appointmentDate'),
-            appointment_time: formData.get('appointmentTime'),
-            service_type: formData.get('serviceType'),
-            notes: formData.get('notes'),
+    document.body.appendChild(modal);
+
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('appointmentDate').value = today;
+
+    // Event listeners
+    document.getElementById('closeModal').addEventListener('click', () => modal.remove());
+    document.getElementById('cancelBtn').addEventListener('click', () => modal.remove());
+    
+    document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+            contact_id: document.getElementById('contactId').value,
+            appointment_date: document.getElementById('appointmentDate').value,
+            appointment_time: document.getElementById('appointmentTime').value,
+            service_type: document.getElementById('serviceType').value,
+            notes: document.getElementById('appointmentNotes').value,
             status: 'Scheduled'
         };
 
         try {
             const response = await fetch('/api/appointments', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(appointmentData)
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
             });
 
-            if (response.ok) {
-                this.hideModal();
-                await this.loadAppointments();
-                this.renderCalendar();
-                this.showSuccessMessage('Appointment added successfully!');
-            } else {
-                const error = await response.json();
-                this.showErrorMessage('Error: ' + error.error);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             }
+
+            const result = await response.json();
+            console.log('✅ Appointment created:', result);
+            
+            showNotification('Appointment created successfully!', 'success');
+            modal.remove();
+            
+            // Reload calendar view
+            await loadCalendarView();
+            
         } catch (error) {
-            this.showErrorMessage('Failed to add appointment');
+            console.error('❌ Error creating appointment:', error);
+            showNotification('Failed to create appointment. Please try again.', 'error');
         }
-    }
-
-    async editAppointment(id) {
-        try {
-            const response = await fetch(`/api/appointments/${id}`);
-            const appointment = await response.json();
-            
-            document.getElementById('editAppointmentId').value = appointment.id;
-            document.getElementById('editContactId').innerHTML = 
-                this.contacts.map(c => `<option value="${c.id}" ${c.id == appointment.contact_id ? 'selected' : ''}>${c.first_name} ${c.last_name}</option>`).join('');
-            document.getElementById('editAppointmentDate').value = appointment.appointment_date;
-            document.getElementById('editAppointmentTime').value = appointment.appointment_time;
-            document.getElementById('editServiceType').value = appointment.service_type;
-            document.getElementById('editNotes').value = appointment.notes || '';
-            document.getElementById('editStatus').value = appointment.status;
-            
-            document.getElementById('editAppointmentModal').style.display = 'block';
-        } catch (error) {
-            this.showErrorMessage('Error loading appointment');
-        }
-    }
-
-    async updateAppointment() {
-        const appointmentId = document.getElementById('editAppointmentId').value;
-        const formData = new FormData(document.getElementById('editAppointmentForm'));
-        const appointmentData = {
-            contact_id: formData.get('contactId'),
-            appointment_date: formData.get('appointmentDate'),
-            appointment_time: formData.get('appointmentTime'),
-            service_type: formData.get('serviceType'),
-            notes: formData.get('notes'),
-            status: formData.get('status')
-        };
-
-        try {
-            const response = await fetch(`/api/appointments/${appointmentId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(appointmentData)
-            });
-
-            if (response.ok) {
-                this.hideEditModal();
-                await this.loadAppointments();
-                this.renderCalendar();
-                this.showSuccessMessage('Appointment updated successfully!');
-            } else {
-                const error = await response.json();
-                this.showErrorMessage('Error: ' + error.error);
-            }
-        } catch (error) {
-            this.showErrorMessage('Failed to update appointment');
-        }
-    }
-
-    async deleteAppointment(id) {
-        if (confirm('Are you sure you want to delete this appointment?')) {
-            try {
-                const response = await fetch(`/api/appointments/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    await this.loadAppointments();
-                    this.renderCalendar();
-                    this.showSuccessMessage('Appointment deleted successfully!');
-                } else {
-                    const error = await response.json();
-                    this.showErrorMessage('Error: ' + error.error);
-                }
-            } catch (error) {
-                this.showErrorMessage('Failed to delete appointment');
-            }
-        }
-    }
-
-    changeMonth(direction) {
-        this.currentDate.setMonth(this.currentDate.getMonth() + direction);
-        this.renderCalendar();
-    }
-
-    renderCalendar() {
-        const monthNames = ["January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"];
-        
-        document.getElementById('currentMonth').textContent = 
-            `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
-
-        const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
-        const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
-        const startDate = new Date(firstDay);
-        startDate.setDate(startDate.getDate() - firstDay.getDay());
-
-        const calendarGrid = document.getElementById('calendarGrid');
-        calendarGrid.innerHTML = '';
-
-        for (let i = 0; i < 42; i++) {
-            const cellDate = new Date(startDate);
-            cellDate.setDate(startDate.getDate() + i);
-            
-            const dayAppointments = this.appointments.filter(apt => 
-                apt.appointment_date === cellDate.toISOString().split('T')[0]
-            );
-
-            const cell = document.createElement('div');
-            cell.className = `min-h-24 p-2 border border-gray-200 ${
-                cellDate.getMonth() !== this.currentDate.getMonth() ? 'bg-gray-50 text-gray-400' : 'bg-white'
-            }`;
-            
-            cell.innerHTML = `
-                <div class="font-medium text-sm">${cellDate.getDate()}</div>
-                ${dayAppointments.map(apt => {
-                    const contact = this.contacts.find(c => c.id == apt.contact_id);
-                    return `
-                        <div class="mt-1 p-1 text-xs bg-blue-100 text-blue-800 rounded cursor-pointer hover:bg-blue-200"
-                             onclick="calendar.editAppointment(${apt.id})">
-                            ${apt.appointment_time} - ${contact ? contact.first_name + ' ' + contact.last_name : 'Unknown'}
-                        </div>
-                    `;
-                }).join('')}
-            `;
-            
-            calendarGrid.appendChild(cell);
-        }
-    }
-
-    showSuccessMessage(message) {
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    showErrorMessage(message) {
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
+    });
 }
 
-const calendar = new CalendarManager();
+function showDayAppointments(date, dayAppointments) {
+    console.log(`📅 Showing appointments for ${date.toDateString()}`);
+    
+    if (dayAppointments.length === 0) {
+        showNotification(`No appointments on ${formatDate(date.toISOString().split('T')[0])}`, 'info');
+        return;
+    }
+
+    // Show appointments for the day
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Appointments - ${formatDate(date.toISOString().split('T')[0])}</h3>
+                <button id="closeDayModal" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-3">
+                ${dayAppointments.map(apt => `
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-medium text-gray-900">${apt.first_name} ${apt.last_name}</div>
+                                <div class="text-sm text-gray-500">${apt.service_type}</div>
+                                <div class="text-sm text-gray-500">${apt.appointment_time}</div>
+                            </div>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(apt.status)}">
+                                ${apt.status}
+                            </span>
+                        </div>
+                        ${apt.notes ? `<div class="mt-2 text-sm text-gray-600">${apt.notes}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    document.getElementById('closeDayModal').addEventListener('click', () => modal.remove());
+}
+
+function editAppointment(appointmentId) {
+    console.log(`✏️ Editing appointment ${appointmentId}`);
+    showNotification(`Edit appointment ${appointmentId} - Feature coming soon!`, 'info');
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric' 
+    });
+}
+
+function getStatusColor(status) {
+    switch (status) {
+        case 'Completed':
+            return 'bg-green-100 text-green-800';
+        case 'Scheduled':
+            return 'bg-blue-100 text-blue-800';
+        case 'Cancelled':
+            return 'bg-red-100 text-red-800';
+        default:
+            return 'bg-gray-100 text-gray-800';
+    }
+}

@@ -1,653 +1,426 @@
-// Modern SPA Application with Tailwind CSS
-class CRMApp {
-    constructor() {
-        this.currentUser = null;
-        this.currentRoute = '';
-        this.init();
-    }
+// CRM Application - Direct Access
+console.log('🚀 CRM App Starting...');
 
-    init() {
-        this.checkAuth();
-        window.addEventListener('hashchange', () => this.handleRoute());
-        window.addEventListener('popstate', () => this.handleRoute());
-        this.setupNavigation();
-        this.setupMobileMenu();
-    }
+let currentView = 'dashboard';
 
-    setupMobileMenu() {
-        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-        const sidebar = document.getElementById('sidebar');
-        
-        if (mobileMenuBtn) {
-            mobileMenuBtn.onclick = () => {
-                sidebar.classList.toggle('-translate-x-full');
-            };
+// Navigation handler
+document.addEventListener('click', (e) => {
+    if (e.target.matches('.nav-item') || e.target.closest('.nav-item')) {
+        e.preventDefault();
+        const navItem = e.target.matches('.nav-item') ? e.target : e.target.closest('.nav-item');
+        const href = navItem.getAttribute('href');
+        if (href && href.startsWith('#/')) {
+            loadView(href.substring(2));
         }
     }
+});
 
-    async checkAuth() {
-        // TEMPORARY - Skip auth for now
-        this.currentUser = { name: 'Demo User', role: 'admin' };
-        this.showApp();
-        this.handleRoute();
+// Load view function
+async function loadView(viewName) {
+    console.log(`📄 Loading: ${viewName}`);
+    currentView = viewName;
+    
+    // Update navigation
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('text-primary', 'bg-gray-100');
+        item.classList.add('text-gray-700');
+    });
+    
+    const activeNav = document.querySelector(`[href="#/${viewName}"]`);
+    if (activeNav) {
+        activeNav.classList.add('text-primary', 'bg-gray-100');
+        activeNav.classList.remove('text-gray-700');
     }
 
-    showApp() {
-        document.getElementById('sidebar').style.display = 'block';
-        document.getElementById('topHeader').style.display = 'block';
-        
-        const headerUserName = document.getElementById('headerUserName');
-        const headerUserRole = document.getElementById('headerUserRole');
-        const headerUserInitial = document.getElementById('headerUserInitial');
-        const adminLinks = document.querySelectorAll('.admin-only');
-        
-        headerUserName.textContent = this.currentUser.name;
-        headerUserRole.textContent = this.currentUser.role;
-        headerUserInitial.textContent = this.currentUser.name.charAt(0).toUpperCase();
-        
-        adminLinks.forEach(link => {
-            link.style.display = this.currentUser.role === 'admin' ? 'flex' : 'none';
-        });
+    // Update page title
+    const pageTitle = document.getElementById('pageTitle');
+    if (pageTitle) {
+        pageTitle.textContent = viewName.charAt(0).toUpperCase() + viewName.slice(1);
     }
 
-    hideApp() {
-        document.getElementById('sidebar').style.display = 'none';
-        document.getElementById('topHeader').style.display = 'none';
-    }
-
-    setupNavigation() {
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('nav-item') || e.target.closest('.nav-item')) {
-                e.preventDefault();
-                const navItem = e.target.classList.contains('nav-item') ? e.target : e.target.closest('.nav-item');
-                const href = navItem.getAttribute('href');
-                window.location.hash = href;
-                this.updateActiveNavLink(navItem);
-            }
-        });
-
-        document.getElementById('headerLogoutBtn').onclick = () => this.logout();
-    }
-
-    updateActiveNavLink(activeLink) {
-        document.querySelectorAll('.nav-item').forEach(link => {
-            link.classList.remove('active', 'bg-primary', 'text-white');
-            link.classList.add('text-gray-700');
-        });
-        activeLink.classList.add('active', 'bg-primary', 'text-white');
-        activeLink.classList.remove('text-gray-700');
-    }
-
-    updatePageTitle(title) {
-        document.getElementById('pageTitle').textContent = title;
-    }
-
-    handleRoute() {
-        const hash = window.location.hash || '#/dashboard';
-        const [route, param] = hash.substring(2).split('/');
-        
-        this.currentRoute = route;
-        
-        switch (route) {
+    // Load content
+    try {
+        switch (viewName) {
             case 'dashboard':
-                this.updatePageTitle('Dashboard');
-                this.loadDashboardView();
-                break;
-            case 'patient':
-                this.updatePageTitle('Patient Profile');
-                this.loadPatientProfileView(param);
+                await loadDashboardView();
                 break;
             case 'calendar':
-                this.updatePageTitle('Calendar');
-                this.loadCalendarView();
+                await loadCalendarView();
+                break;
+            case 'subscriptions':
+                await loadSubscriptionsView();
                 break;
             case 'invoices':
-                this.updatePageTitle('Invoices');
-                this.loadInvoicesView();
+                await loadInvoicesView();
                 break;
             case 'reports':
-                this.updatePageTitle('Reports');
-                this.loadReportsView();
+                await loadReportsView();
                 break;
             case 'templates':
-                this.updatePageTitle('Templates');
-                this.loadTemplatesView();
+                await loadTemplatesView();
                 break;
             case 'admin':
-                this.updatePageTitle('Admin Dashboard');
-                this.loadAdminView();
+                await loadAdminView();
                 break;
             default:
-                this.updatePageTitle('Dashboard');
-                this.loadDashboardView();
+                await loadDashboardView();
         }
+    } catch (error) {
+        console.error(`❌ Error loading ${viewName}:`, error);
+        document.getElementById('app').innerHTML = `
+            <div class="p-6">
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <h3 class="text-red-800 font-medium">Error Loading ${viewName}</h3>
+                    <p class="text-red-700 mt-2">${error.message}</p>
+                    <button onclick="loadView('${viewName}')" class="mt-3 bg-red-100 px-3 py-2 rounded text-red-800 hover:bg-red-200">
+                        Retry
+                    </button>
+                </div>
+            </div>
+        `;
     }
+}
 
-    async logout() {
-        window.location.reload();
-    }
+// Dashboard view
+async function loadDashboardView() {
+    console.log('📊 Loading dashboard...');
+    
+    const response = await fetch('/api/contacts');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const contacts = await response.json();
 
-    async loadDashboardView() {
-        const html = `
+    document.getElementById('app').innerHTML = `
         <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div class="bg-white p-4 rounded-lg shadow border">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">Patient Management</h2>
+                <p class="text-gray-600">Manage your patients and their information</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <svg class="h-8 w-8 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm text-gray-600">Total Patients</p>
-                            <p class="text-2xl font-bold text-gray-900" id="totalPatientsCount">-</p>
+                        <div class="p-2 bg-blue-100 rounded-lg">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Total Patients</p>
+                            <p class="text-2xl font-semibold text-gray-900">${contacts.length}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white p-4 rounded-lg shadow border">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <svg class="h-8 w-8 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm text-gray-600">Appointments</p>
-                            <p class="text-2xl font-bold text-gray-900" id="totalAppointmentsCount">-</p>
+                        <div class="p-2 bg-green-100 rounded-lg">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">Active Clients</p>
+                            <p class="text-2xl font-semibold text-gray-900">${contacts.filter(c => c.status === 'Client').length}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white p-4 rounded-lg shadow border">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <svg class="h-8 w-8 text-yellow-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm text-gray-600">Invoices</p>
-                            <p class="text-2xl font-bold text-gray-900" id="totalInvoicesCount">-</p>
+                        <div class="p-2 bg-yellow-100 rounded-lg">
+                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">New Leads</p>
+                            <p class="text-2xl font-semibold text-gray-900">${contacts.filter(c => c.status === 'Lead').length}</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white p-4 rounded-lg shadow border">
+                <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <svg class="h-8 w-8 text-purple-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm text-gray-600">Revenue</p>
-                            <p class="text-2xl font-bold text-gray-900" id="totalRevenueCount">-</p>
+                        <div class="p-2 bg-purple-100 rounded-lg">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-600">This Month</p>
+                            <p class="text-2xl font-semibold text-gray-900">${contacts.filter(c => {
+                                const created = new Date(c.created_at);
+                                const now = new Date();
+                                return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+                            }).length}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow border">
-                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-lg font-semibold text-gray-900">Patients</h3>
-                        <p class="text-sm text-gray-600">Manage your patient database</p>
-                    </div>
-                    <button id="addContactBtn" class="bg-primary hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Add Patient
-                    </button>
+            <!-- Patients Table -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Recent Patients</h3>
                 </div>
-                
                 <div class="overflow-x-auto">
-                    <table class="w-full">
+                    <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Complaint</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody id="contactsTableBody" class="divide-y divide-gray-200">
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            ${contacts.map(contact => `
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                                                <span class="text-white font-medium">${contact.first_name.charAt(0)}${contact.last_name.charAt(0)}</span>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">${contact.first_name} ${contact.last_name}</div>
+                                                <div class="text-sm text-gray-500">ID: ${contact.id}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-gray-900">${contact.email}</div>
+                                        <div class="text-sm text-gray-500">${contact.phone || 'No phone'}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-900 max-w-xs truncate">${contact.primary_complaint || 'No complaint'}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${contact.status === 'Client' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                            ${contact.status}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button onclick="viewPatient(${contact.id})" class="text-primary hover:text-primary-dark mr-3">View</button>
+                                        <button onclick="editPatient(${contact.id})" class="text-blue-600 hover:text-blue-900 mr-3">Edit</button>
+                                        <button onclick="deletePatient(${contact.id})" class="text-red-600 hover:text-red-900">Delete</button>
+                                    </td>
+                                </tr>
+                            `).join('')}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+    `;
+}
 
-        <!-- Add Contact Modal -->
-        <div id="addContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">Add New Patient</h3>
-                        <button class="close text-gray-400 hover:text-gray-600">×</button>
-                    </div>
-                    
-                    <form id="addContactForm" class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">First Name</label>
-                                <input type="text" id="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Last Name</label>
-                                <input type="text" id="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" id="email" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Phone</label>
-                            <input type="tel" id="phone" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
-                            <textarea id="primaryComplaint" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Status</label>
-                            <select id="status" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                                <option value="Lead">Lead</option>
-                                <option value="Client">Client</option>
-                                <option value="Past Client">Past Client</option>
-                            </select>
-                        </div>
-                        
-                        <div class="flex justify-end space-x-3 pt-4">
-                            <button type="button" class="close px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Cancel</button>
-                            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-teal-700 rounded-md">Add Patient</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🎯 CRM Initialized - Direct Access Mode');
+    loadView('dashboard');
+});
 
-        <!-- View Contact Modal -->
-        <div id="viewContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">Patient Details</h3>
-                        <button class="close-view text-gray-400 hover:text-gray-600">×</button>
-                    </div>
-                    
-                    <div id="viewContactContent" class="space-y-3">
-                        <!-- Content will be populated dynamically -->
-                    </div>
-                    
-                    <div class="flex justify-end pt-4">
-                        <button class="close-view px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Close</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Edit Contact Modal -->
-        <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-                <div class="mt-3">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-medium text-gray-900">Edit Patient</h3>
-                        <button class="close-edit text-gray-400 hover:text-gray-600">×</button>
-                    </div>
-                    
-                    <form id="editContactForm" class="space-y-4">
-                        <input type="hidden" id="editContactId">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">First Name</label>
-                                <input type="text" id="editFirstName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Last Name</label>
-                                <input type="text" id="editLastName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                            </div>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" id="editEmail" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Phone</label>
-                            <input type="tel" id="editPhone" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
-                            <textarea id="editPrimaryComplaint" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Status</label>
-                            <select id="editStatus" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
-                                <option value="Lead">Lead</option>
-                                <option value="Client">Client</option>
-                                <option value="Past Client">Past Client</option>
-                            </select>
-                        </div>
-                        
-                        <div class="flex justify-end space-x-3 pt-4">
-                            <button type="button" class="close-edit px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Cancel</button>
-                            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-teal-700 rounded-md">Update Patient</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        `;
+// Patient Management Functions
+async function viewPatient(patientId) {
+    console.log(`👁️ Viewing patient ${patientId}`);
+    
+    try {
+        const response = await fetch(`/api/contacts/${patientId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const patient = await response.json();
         
-        document.getElementById('app').innerHTML = html;
-        this.setupDashboardEvents();
-        this.loadContacts();
-        this.loadDashboardStats();
-    }
-
-    setupDashboardEvents() {
-        const addContactBtn = document.getElementById('addContactBtn');
-        const addContactModal = document.getElementById('addContactModal');
-        const editContactModal = document.getElementById('editContactModal');
-        const viewContactModal = document.getElementById('viewContactModal');
-        const closeModal = document.querySelector('.close');
-        const closeEditModal = document.querySelector('.close-edit');
-        const closeViewModals = document.querySelectorAll('.close-view');
-
-        addContactBtn.onclick = () => addContactModal.style.display = 'block';
-        closeModal.onclick = () => addContactModal.style.display = 'none';
-        closeEditModal.onclick = () => editContactModal.style.display = 'none';
-        closeViewModals.forEach(btn => {
-            btn.onclick = () => viewContactModal.style.display = 'none';
-        });
-
-        document.getElementById('addContactForm').onsubmit = (e) => {
-            e.preventDefault();
-            this.addContact();
-        };
-
-        document.getElementById('editContactForm').onsubmit = (e) => {
-            e.preventDefault();
-            this.updateContact();
-        };
-
-        window.onclick = (event) => {
-            if (event.target === addContactModal) addContactModal.style.display = 'none';
-            if (event.target === editContactModal) editContactModal.style.display = 'none';
-            if (event.target === viewContactModal) viewContactModal.style.display = 'none';
-        };
-    }
-
-    async loadDashboardStats() {
-        try {
-            const response = await fetch('/api/admin/analytics/overview');
-            const data = await response.json();
-            document.getElementById('totalPatientsCount').textContent = data.total_patients;
-            document.getElementById('totalAppointmentsCount').textContent = data.total_appointments;
-            document.getElementById('totalInvoicesCount').textContent = data.total_appointments;
-            document.getElementById('totalRevenueCount').textContent = '$' + (data.total_revenue || 0);
-        } catch (error) {
-            console.error('Error loading stats:', error);
-        }
-    }
-
-    async loadContacts() {
-        try {
-            const response = await fetch('/api/contacts');
-            const contacts = await response.json();
-            this.displayContacts(contacts);
-        } catch (error) {
-            console.error('Error loading contacts:', error);
-            document.getElementById('contactsTableBody').innerHTML = 
-                '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading contacts</td></tr>';
-        }
-    }
-
-    displayContacts(contacts) {
-        const tbody = document.getElementById('contactsTableBody');
-        
-        if (contacts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No contacts found.</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = contacts.map(contact => `
-            <tr class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <a href="#/patient/${contact.id}" class="text-primary hover:text-teal-700 font-medium">${this.escapeHtml(contact.first_name)} ${this.escapeHtml(contact.last_name)}</a>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${this.escapeHtml(contact.email)}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${this.escapeHtml(contact.phone) || 'N/A'}</td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${this.getStatusColor(contact.status)}">
-                        ${this.escapeHtml(contact.status)}
-                    </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${this.escapeHtml(contact.primary_complaint) || 'N/A'}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button onclick="app.viewContact(${contact.id})" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700">
-                        View
-                    </button>
-                    <button onclick="app.editContact(${contact.id})" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-yellow-600 hover:bg-yellow-700">
-                        Edit
-                    </button>
-                    <button onclick="app.deleteContact(${contact.id})" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700">
-                        Delete
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async addContact() {
-        const contactData = {
-            first_name: document.getElementById('firstName').value.trim(),
-            last_name: document.getElementById('lastName').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            primary_complaint: document.getElementById('primaryComplaint').value.trim(),
-            status: document.getElementById('status').value
-        };
-
-        try {
-            const response = await fetch('/api/contacts', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(contactData)
-            });
-
-            if (response.ok) {
-                document.getElementById('addContactModal').style.display = 'none';
-                document.getElementById('addContactForm').reset();
-                alert('Patient added successfully!');
-                this.loadContacts();
-                this.loadDashboardStats();
-            } else {
-                const error = await response.json();
-                this.showErrorMessage('Error: ' + error.error);
-            }
-        } catch (error) {
-            console.error('Error adding contact:', error);
-            this.showErrorMessage('Failed to add patient');
-        }
-    }
-
-    async viewContact(id) {
-        try {
-            const response = await fetch(`/api/contacts/${id}`);
-            const contact = await response.json();
-            
-            const content = document.getElementById('viewContactContent');
-            content.innerHTML = `
-                <div class="space-y-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Name</label>
-                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.first_name)} ${this.escapeHtml(contact.last_name)}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Email</label>
-                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.email)}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Phone</label>
-                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.phone) || 'N/A'}</p>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Status</label>
-                        <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${this.getStatusColor(contact.status)}">
-                            ${this.escapeHtml(contact.status)}
-                        </span>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
-                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.primary_complaint) || 'N/A'}</p>
-                    </div>
-                </div>
-            `;
-            
-            document.getElementById('viewContactModal').style.display = 'block';
-        } catch (error) {
-            this.showErrorMessage('Error loading patient details');
-        }
-    }
-
-    async editContact(id) {
-        try {
-            const response = await fetch(`/api/contacts/${id}`);
-            const contact = await response.json();
-            
-            document.getElementById('editContactId').value = contact.id;
-            document.getElementById('editFirstName').value = contact.first_name;
-            document.getElementById('editLastName').value = contact.last_name;
-            document.getElementById('editEmail').value = contact.email;
-            document.getElementById('editPhone').value = contact.phone || '';
-            document.getElementById('editPrimaryComplaint').value = contact.primary_complaint || '';
-            document.getElementById('editStatus').value = contact.status;
-            
-            document.getElementById('editContactModal').style.display = 'block';
-        } catch (error) {
-            alert('Error loading patient for editing');
-        }
-    }
-
-    async updateContact() {
-        const contactId = document.getElementById('editContactId').value;
-        const contactData = {
-            first_name: document.getElementById('editFirstName').value.trim(),
-            last_name: document.getElementById('editLastName').value.trim(),
-            email: document.getElementById('editEmail').value.trim(),
-            phone: document.getElementById('editPhone').value.trim(),
-            primary_complaint: document.getElementById('editPrimaryComplaint').value.trim(),
-            status: document.getElementById('editStatus').value
-        };
-
-        try {
-            const response = await fetch(`/api/contacts/${contactId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(contactData)
-            });
-
-            if (response.ok) {
-                document.getElementById('editContactModal').style.display = 'none';
-                alert('Patient updated successfully!');
-                this.loadContacts();
-            } else {
-                const error = await response.json();
-                alert('Error: ' + error.error);
-            }
-        } catch (error) {
-            console.error('Error updating contact:', error);
-            alert('Failed to update patient');
-        }
-    }
-
-    async deleteContact(id) {
-        if (confirm('Are you sure you want to delete this patient?')) {
-            try {
-                const response = await fetch(`/api/contacts/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    alert('Patient deleted successfully!');
-                    this.loadContacts();
-                    this.loadDashboardStats();
-                } else {
-                    const error = await response.json();
-                    alert('Error: ' + error.error);
-                }
-            } catch (error) {
-                console.error('Error deleting contact:', error);
-                alert('Failed to delete patient');
-            }
-        }
-    }
-
-    getStatusColor(status) {
-        switch(status) {
-            case 'Client': return 'bg-green-100 text-green-800';
-            case 'Lead': return 'bg-yellow-100 text-yellow-800';
-            case 'Past Client': return 'bg-gray-100 text-gray-800';
-            default: return 'bg-blue-100 text-blue-800';
-        }
-    }
-
-    loadPatientProfileView(patientId) {
-        window.location.href = `patient-profile.html?id=${patientId}`;
-    }
-
-    loadCalendarView() {
-        window.location.href = 'calendar.html';
-    }
-
-    loadInvoicesView() {
-        window.location.href = 'invoices.html';
-    }
-
-    loadReportsView() {
-        window.location.href = 'reports.html';
-    }
-
-    loadTemplatesView() {
-        window.location.href = 'templates.html';
-    }
-
-    async loadAdminView() {
-        window.location.href = 'admin-dashboard.html';
-    }
-
-    escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    showSuccessMessage(message) {
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
-    }
-
-    showErrorMessage(message) {
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        // Show patient details modal
+        showPatientModal(patient, 'view');
+    } catch (error) {
+        console.error('❌ Error viewing patient:', error);
+        showNotification('Error loading patient details', 'error');
     }
 }
 
-// Global functions for backward compatibility
-window.showLogin = () => {};
-window.showSignup = () => {};
+async function editPatient(patientId) {
+    console.log(`✏️ Editing patient ${patientId}`);
+    
+    try {
+        const response = await fetch(`/api/contacts/${patientId}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const patient = await response.json();
+        
+        // Show patient edit modal
+        showPatientModal(patient, 'edit');
+    } catch (error) {
+        console.error('❌ Error loading patient for edit:', error);
+        showNotification('Error loading patient details', 'error');
+    }
+}
 
-// Initialize the app
-const app = new CRMApp();
+async function deletePatient(patientId) {
+    console.log(`🗑️ Deleting patient ${patientId}`);
+    
+    if (!confirm('Are you sure you want to delete this patient? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/contacts/${patientId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        showNotification('Patient deleted successfully', 'success');
+        loadDashboardView(); // Refresh the dashboard
+    } catch (error) {
+        console.error('❌ Error deleting patient:', error);
+        showNotification('Error deleting patient', 'error');
+    }
+}
+
+function showPatientModal(patient, mode) {
+    const isReadOnly = mode === 'view';
+    const modalTitle = mode === 'view' ? 'Patient Details' : 'Edit Patient';
+    
+    const modalHTML = `
+        <div id="patientModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 lg:w-1/2 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">${modalTitle}</h3>
+                        <button onclick="closePatientModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <form id="patientForm" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">First Name</label>
+                                <input type="text" name="first_name" value="${patient.first_name || ''}" 
+                                       ${isReadOnly ? 'readonly' : ''} 
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm ${isReadOnly ? 'bg-gray-50' : 'focus:ring-primary focus:border-primary'}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                                <input type="text" name="last_name" value="${patient.last_name || ''}" 
+                                       ${isReadOnly ? 'readonly' : ''} 
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm ${isReadOnly ? 'bg-gray-50' : 'focus:ring-primary focus:border-primary'}">
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Email</label>
+                                <input type="email" name="email" value="${patient.email || ''}" 
+                                       ${isReadOnly ? 'readonly' : ''} 
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm ${isReadOnly ? 'bg-gray-50' : 'focus:ring-primary focus:border-primary'}">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                <input type="tel" name="phone" value="${patient.phone || ''}" 
+                                       ${isReadOnly ? 'readonly' : ''} 
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm ${isReadOnly ? 'bg-gray-50' : 'focus:ring-primary focus:border-primary'}">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
+                            <textarea name="primary_complaint" rows="3" ${isReadOnly ? 'readonly' : ''} 
+                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm ${isReadOnly ? 'bg-gray-50' : 'focus:ring-primary focus:border-primary'}">${patient.primary_complaint || ''}</textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Status</label>
+                                <select name="status" ${isReadOnly ? 'disabled' : ''} 
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm ${isReadOnly ? 'bg-gray-50' : 'focus:ring-primary focus:border-primary'}">
+                                    <option value="Lead" ${patient.status === 'Lead' ? 'selected' : ''}>Lead</option>
+                                    <option value="Client" ${patient.status === 'Client' ? 'selected' : ''}>Client</option>
+                                    <option value="Inactive" ${patient.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Source</label>
+                                <input type="text" name="source" value="${patient.source || ''}" 
+                                       ${isReadOnly ? 'readonly' : ''} 
+                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm ${isReadOnly ? 'bg-gray-50' : 'focus:ring-primary focus:border-primary'}">
+                            </div>
+                        </div>
+                        
+                        ${!isReadOnly ? `
+                            <div class="flex justify-end space-x-3 pt-4">
+                                <button type="button" onclick="closePatientModal()" 
+                                        class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                    Cancel
+                                </button>
+                                <button type="submit" 
+                                        class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">
+                                    Save Changes
+                                </button>
+                            </div>
+                        ` : `
+                            <div class="flex justify-end pt-4">
+                                <button type="button" onclick="closePatientModal()" 
+                                        class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">
+                                    Close
+                                </button>
+                            </div>
+                        `}
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add form submit handler for edit mode
+    if (!isReadOnly) {
+        document.getElementById('patientForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await savePatientChanges(patient.id, new FormData(e.target));
+        });
+    }
+}
+
+function closePatientModal() {
+    const modal = document.getElementById('patientModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function savePatientChanges(patientId, formData) {
+    console.log(`💾 Saving changes for patient ${patientId}`);
+    
+    try {
+        const data = {
+            first_name: formData.get('first_name'),
+            last_name: formData.get('last_name'),
+            email: formData.get('email'),
+            phone: formData.get('phone'),
+            primary_complaint: formData.get('primary_complaint'),
+            status: formData.get('status'),
+            source: formData.get('source')
+        };
+        
+        const response = await fetch(`/api/contacts/${patientId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        showNotification('Patient updated successfully', 'success');
+        closePatientModal();
+        loadDashboardView(); // Refresh the dashboard
+    } catch (error) {
+        console.error('❌ Error saving patient:', error);
+        showNotification('Error saving patient changes', 'error');
+    }
+}
