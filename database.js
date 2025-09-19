@@ -1,73 +1,50 @@
 const sqlite3 = require('sqlite3').verbose();
-const fs = require('fs');
 const path = require('path');
 
-const dbPath = path.join(__dirname, 'crm.db');
+// Use in-memory database for Vercel
+const dbPath = ':memory:';
 
 // Initialize database
 function initDatabase() {
     const db = new sqlite3.Database(dbPath);
     
-    const sqlFiles = [
-        'init-db.sql',
-        'extended-db.sql', 
-        'invoices-db.sql',
-        'templates-db.sql',
-        'patient-profile-db.sql',
-        'users-db.sql',
-        'admin-enhancements.sql',
-        'dummy-data.sql',
-        'fix-admin.sql'
-    ];
-    
-    let completed = 0;
-    
-    function executeNext() {
-        if (completed >= sqlFiles.length) {
-            insertDefaultTemplates(db);
-            return;
-        }
-        
-        const sqlFile = sqlFiles[completed];
-        const sql = fs.readFileSync(path.join(__dirname, sqlFile), 'utf8');
-        
-        db.exec(sql, (err) => {
-            if (err) {
-                console.error(`Error executing ${sqlFile}:`, err);
-            } else {
-                console.log(`${sqlFile} executed successfully`);
-            }
-            completed++;
-            executeNext();
-        });
-    }
-    
-    executeNext();
-    return db;
-}
+    // Create basic tables
+    db.serialize(() => {
+        // Users table
+        db.run(`CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT NOT NULL,
+            role TEXT DEFAULT 'user' CHECK(role IN ('admin', 'therapist', 'user')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
 
-function insertDefaultTemplates(db) {
-    const templates = [
-        {
-            name: '6-Week Posture Correction Plan',
-            description: 'Comprehensive posture correction program',
-            duration: '6 weeks',
-            price: 299.99,
-            content: 'Week 1-2: Assessment and basic exercises\nWeek 3-4: Strengthening routines\nWeek 5-6: Advanced corrections and maintenance'
-        },
-        {
-            name: '1-on-1 Online Coaching Package',
-            description: 'Personal coaching sessions',
-            duration: '4 weeks',
-            price: 199.99,
-            content: '4 weekly 1-hour sessions\nPersonalized exercise plan\n24/7 support via messaging'
-        }
-    ];
+        // Contacts table
+        db.run(`CREATE TABLE IF NOT EXISTS contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            phone TEXT,
+            primary_complaint TEXT,
+            status TEXT DEFAULT 'Lead' CHECK(status IN ('Lead', 'Client', 'Past Client')),
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
 
-    templates.forEach(template => {
-        const sql = `INSERT OR IGNORE INTO treatment_plans (name, description, duration, price, template_content) VALUES (?, ?, ?, ?, ?)`;
-        db.run(sql, [template.name, template.description, template.duration, template.price, template.content]);
+        // Insert demo admin user (password: admin123)
+        const adminHash = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8.jjAXBfWMZmtUB8Z1fSOHSRG6zV8W';
+        db.run(`INSERT OR IGNORE INTO users (username, password_hash, name, role) VALUES 
+                ('admin', ?, 'System Administrator', 'admin')`, [adminHash]);
+
+        // Insert demo contacts
+        db.run(`INSERT OR IGNORE INTO contacts (first_name, last_name, email, phone, primary_complaint, status) VALUES 
+                ('John', 'Smith', 'john@email.com', '555-0101', 'Lower back pain', 'Client'),
+                ('Sarah', 'Wilson', 'sarah@email.com', '555-0102', 'Neck pain', 'Lead'),
+                ('Mike', 'Brown', 'mike@email.com', '555-0103', 'Shoulder pain', 'Client')`);
     });
+    
+    return db;
 }
 
 // Connect to database
