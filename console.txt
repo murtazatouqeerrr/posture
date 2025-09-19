@@ -1,47 +1,5 @@
-Logo
-Posture Perfect
-Dashboard
-Calendar
-Subscriptions
-Invoices
-Reports
-Templates
-Admin
-Admin
-Welcome to Posture Perfect CRM
-
-Admin User
-
-Administrator
-
-A
-Admin Dashboard
-System administration and analytics
-
-Total Users
-
-1
-
-Total Patients
-
-3
-
-Total Appointments
-
-0
-
-Total Revenue
-
-$150.00
-
-Users
-Analytics
-Settings
-User Management
-Add New User
-User	Email	Role	Created	Actions
-A
-Admin User
-ID: 1
-admin@postureperect.com
-Administrator	Invalid Date	Edit Delete
+admin-dashboard.js:501 
+ POST https://posture-beta.vercel.app/api/admin/users net::ERR_NETWORK_CHANGED
+admin-dashboard.js:523 ❌ Error creating user: TypeError: Failed to fetch
+    at HTMLFormElement.<anonymous> (admin-dashboard.js:501:36)
+(anonymous)	@	admin-dashboard.js:523

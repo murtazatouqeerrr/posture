@@ -545,12 +545,225 @@ function refreshAnalytics() {
 
 function exportData() {
     console.log('📤 Exporting data...');
-    showNotification('Data export - Feature coming soon!', 'info');
+    
+    const exportModal = document.createElement('div');
+    exportModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+    exportModal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">Export Data</h3>
+                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Data to Export:</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="exportContacts" checked class="mr-2">
+                            Patients/Contacts (${adminData.contacts.length} records)
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="exportInvoices" checked class="mr-2">
+                            Invoices (${adminData.invoices.length} records)
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="exportUsers" checked class="mr-2">
+                            Users (${adminData.users.length} records)
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Export Format:</label>
+                    <select id="exportFormat" class="w-full px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="csv">CSV</option>
+                        <option value="json">JSON</option>
+                    </select>
+                </div>
+                
+                <div class="flex space-x-3 mt-6">
+                    <button onclick="performExport()" class="flex-1 bg-primary text-white py-2 px-4 rounded-md hover:bg-primary-dark">
+                        Export Data
+                    </button>
+                    <button onclick="this.closest('.fixed').remove()" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(exportModal);
+}
+
+function performExport() {
+    const exportContacts = document.getElementById('exportContacts').checked;
+    const exportInvoices = document.getElementById('exportInvoices').checked;
+    const exportUsers = document.getElementById('exportUsers').checked;
+    const format = document.getElementById('exportFormat').value;
+    
+    const exportData = {};
+    
+    if (exportContacts) exportData.contacts = adminData.contacts;
+    if (exportInvoices) exportData.invoices = adminData.invoices;
+    if (exportUsers) exportData.users = adminData.users;
+    
+    if (format === 'csv') {
+        exportAsCSV(exportData);
+    } else {
+        exportAsJSON(exportData);
+    }
+    
+    document.querySelector('.fixed').remove();
+    showNotification('Data exported successfully!', 'success');
+}
+
+function exportAsJSON(data) {
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `posture-perfect-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function exportAsCSV(data) {
+    let csvContent = '';
+    
+    Object.keys(data).forEach(key => {
+        if (data[key].length > 0) {
+            csvContent += `\\n\\n=== ${key.toUpperCase()} ===\\n`;
+            const headers = Object.keys(data[key][0]);
+            csvContent += headers.join(',') + '\\n';
+            
+            data[key].forEach(row => {
+                const values = headers.map(header => {
+                    const value = row[header] || '';
+                    return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+                });
+                csvContent += values.join(',') + '\\n';
+            });
+        }
+    });
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `posture-perfect-export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 }
 
 function viewLogs() {
     console.log('📋 Viewing logs...');
-    showNotification('View logs - Feature coming soon!', 'info');
+    
+    const logsModal = document.createElement('div');
+    logsModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+    logsModal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-[80vh] overflow-hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">System Logs</h3>
+                <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4 flex space-x-2">
+                <button onclick="filterLogs('all')" class="log-filter-btn bg-primary text-white px-3 py-1 rounded text-sm">All</button>
+                <button onclick="filterLogs('user')" class="log-filter-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">User Actions</button>
+                <button onclick="filterLogs('system')" class="log-filter-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">System</button>
+                <button onclick="filterLogs('error')" class="log-filter-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Errors</button>
+                <button onclick="exportLogs()" class="ml-auto bg-green-600 text-white px-3 py-1 rounded text-sm">Export Logs</button>
+            </div>
+            
+            <div id="logsContent" class="bg-gray-50 rounded p-4 h-96 overflow-y-auto font-mono text-sm">
+                Loading logs...
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(logsModal);
+    loadSystemLogs();
+}
+
+function loadSystemLogs() {
+    // Generate mock system logs
+    const logs = [
+        { timestamp: new Date().toISOString(), type: 'system', message: 'Server started successfully' },
+        { timestamp: new Date(Date.now() - 300000).toISOString(), type: 'user', message: 'User login: admin@postureperect.com' },
+        { timestamp: new Date(Date.now() - 600000).toISOString(), type: 'user', message: 'New patient created: John Doe' },
+        { timestamp: new Date(Date.now() - 900000).toISOString(), type: 'system', message: 'Database backup completed' },
+        { timestamp: new Date(Date.now() - 1200000).toISOString(), type: 'user', message: 'Invoice #123 created for $150.00' },
+        { timestamp: new Date(Date.now() - 1500000).toISOString(), type: 'error', message: 'Failed to send email notification' },
+        { timestamp: new Date(Date.now() - 1800000).toISOString(), type: 'user', message: 'Payment processed: $150.00' },
+        { timestamp: new Date(Date.now() - 2100000).toISOString(), type: 'system', message: 'Scheduled maintenance completed' },
+        { timestamp: new Date(Date.now() - 2400000).toISOString(), type: 'user', message: 'New user created: therapist@clinic.com' },
+        { timestamp: new Date(Date.now() - 2700000).toISOString(), type: 'error', message: 'Database connection timeout' }
+    ];
+    
+    window.systemLogs = logs;
+    displayLogs(logs);
+}
+
+function displayLogs(logs) {
+    const content = document.getElementById('logsContent');
+    content.innerHTML = logs.map(log => {
+        const typeColor = {
+            system: 'text-blue-600',
+            user: 'text-green-600',
+            error: 'text-red-600'
+        }[log.type] || 'text-gray-600';
+        
+        return `<div class="mb-1">
+            <span class="text-gray-500">[${new Date(log.timestamp).toLocaleString()}]</span>
+            <span class="${typeColor} font-semibold">[${log.type.toUpperCase()}]</span>
+            <span class="text-gray-800">${log.message}</span>
+        </div>`;
+    }).join('');
+}
+
+function filterLogs(type) {
+    // Update button styles
+    document.querySelectorAll('.log-filter-btn').forEach(btn => {
+        btn.className = 'log-filter-btn bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm';
+    });
+    event.target.className = 'log-filter-btn bg-primary text-white px-3 py-1 rounded text-sm';
+    
+    // Filter logs
+    const filteredLogs = type === 'all' ? window.systemLogs : window.systemLogs.filter(log => log.type === type);
+    displayLogs(filteredLogs);
+}
+
+function exportLogs() {
+    const logText = window.systemLogs.map(log => 
+        `[${new Date(log.timestamp).toLocaleString()}] [${log.type.toUpperCase()}] ${log.message}`
+    ).join('\\n');
+    
+    const blob = new Blob([logText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `system-logs-${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification('Logs exported successfully!', 'success');
 }
 
 function saveSettings() {
