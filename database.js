@@ -8,7 +8,7 @@ const dbPath = ':memory:';
 function initDatabase() {
     const db = new sqlite3.Database(dbPath);
     
-    // Create basic tables
+    // Create all required tables
     db.serialize(() => {
         // Users table
         db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -32,16 +32,76 @@ function initDatabase() {
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
+        // Appointments table
+        db.run(`CREATE TABLE IF NOT EXISTS appointments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact_id INTEGER NOT NULL,
+            date_time DATETIME NOT NULL,
+            type TEXT NOT NULL,
+            notes TEXT,
+            status TEXT DEFAULT 'Scheduled' CHECK(status IN ('Scheduled', 'Completed', 'Cancelled')),
+            assigned_to INTEGER,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (contact_id) REFERENCES contacts(id),
+            FOREIGN KEY (assigned_to) REFERENCES users(id)
+        )`);
+
+        // Invoices table
+        db.run(`CREATE TABLE IF NOT EXISTS invoices (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            contact_id INTEGER NOT NULL,
+            amount DECIMAL(10,2) NOT NULL,
+            status TEXT DEFAULT 'Sent' CHECK(status IN ('Sent', 'Paid', 'Overdue')),
+            due_date DATE,
+            services_rendered TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (contact_id) REFERENCES contacts(id)
+        )`);
+
+        // Treatment plans table
+        db.run(`CREATE TABLE IF NOT EXISTS treatment_plans (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT,
+            duration TEXT,
+            price DECIMAL(10,2),
+            template_content TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
         // Insert demo admin user (password: admin123)
         const adminHash = '$2a$10$CwTycUXWue0Thq9StjUM0uJ8.jjAXBfWMZmtUB8Z1fSOHSRG6zV8W';
         db.run(`INSERT OR IGNORE INTO users (username, password_hash, name, role) VALUES 
                 ('admin', ?, 'System Administrator', 'admin')`, [adminHash]);
+
+        // Insert demo therapists
+        db.run(`INSERT OR IGNORE INTO users (username, password_hash, name, role) VALUES 
+                ('therapist1', ?, 'Dr. Sarah Johnson', 'therapist'),
+                ('therapist2', ?, 'Dr. Mike Chen', 'therapist')`, [adminHash, adminHash]);
 
         // Insert demo contacts
         db.run(`INSERT OR IGNORE INTO contacts (first_name, last_name, email, phone, primary_complaint, status) VALUES 
                 ('John', 'Smith', 'john@email.com', '555-0101', 'Lower back pain', 'Client'),
                 ('Sarah', 'Wilson', 'sarah@email.com', '555-0102', 'Neck pain', 'Lead'),
                 ('Mike', 'Brown', 'mike@email.com', '555-0103', 'Shoulder pain', 'Client')`);
+
+        // Insert demo appointments
+        db.run(`INSERT OR IGNORE INTO appointments (contact_id, date_time, type, notes, status, assigned_to) VALUES 
+                (1, '2024-01-15 10:00:00', 'Initial Assessment', 'First consultation', 'Completed', 1),
+                (2, '2024-01-20 14:00:00', 'Initial Assessment', 'New patient assessment', 'Scheduled', 2),
+                (3, '2024-01-25 09:00:00', '1-on-1 Treatment', 'Treatment session', 'Completed', 1)`);
+
+        // Insert demo invoices
+        db.run(`INSERT OR IGNORE INTO invoices (contact_id, amount, status, due_date, services_rendered) VALUES 
+                (1, 150.00, 'Paid', '2024-01-30', 'Initial Assessment'),
+                (2, 120.00, 'Sent', '2024-02-05', '1-on-1 Treatment Session'),
+                (3, 150.00, 'Paid', '2024-02-10', 'Initial Assessment')`);
+
+        // Insert demo treatment plans
+        db.run(`INSERT OR IGNORE INTO treatment_plans (name, description, duration, price, template_content) VALUES 
+                ('6-Week Posture Correction Plan', 'Comprehensive posture correction program', '6 weeks', 299.99, 'Week 1-2: Assessment and basic exercises\nWeek 3-4: Strengthening routines\nWeek 5-6: Advanced corrections and maintenance'),
+                ('1-on-1 Online Coaching Package', 'Personal coaching sessions', '4 weeks', 199.99, '4 weekly 1-hour sessions\nPersonalized exercise plan\n24/7 support via messaging'),
+                ('Back Pain Relief Program', 'Specialized program for back pain', '8 weeks', 399.99, 'Week 1-2: Pain assessment\nWeek 3-6: Treatment protocols\nWeek 7-8: Maintenance and prevention')`);
     });
     
     return db;

@@ -201,141 +201,436 @@ app.get('/api/check-auth', (req, res) => {
     }
 });
 
-// Simple API endpoints for demo
+// CONTACTS/PATIENTS ENDPOINTS
 app.get('/api/contacts', (req, res) => {
-    const contacts = [
-        { id: 1, first_name: 'John', last_name: 'Smith', email: 'john@email.com', phone: '555-0101', status: 'Client', primary_complaint: 'Lower back pain' },
-        { id: 2, first_name: 'Sarah', last_name: 'Wilson', email: 'sarah@email.com', phone: '555-0102', status: 'Lead', primary_complaint: 'Neck pain' },
-        { id: 3, first_name: 'Mike', last_name: 'Brown', email: 'mike@email.com', phone: '555-0103', status: 'Client', primary_complaint: 'Shoulder pain' }
-    ];
-    res.json(contacts);
-});
-
-// ADMIN USER MANAGEMENT ENDPOINTS (Demo - No Auth Required)
-app.get('/api/admin/users', (req, res) => {
-    const users = [
-        { id: 1, username: 'admin', name: 'System Administrator', role: 'admin', created_at: '2024-01-01' },
-        { id: 2, username: 'therapist1', name: 'Dr. Sarah Johnson', role: 'therapist', created_at: '2024-01-02' },
-        { id: 3, username: 'therapist2', name: 'Dr. Mike Chen', role: 'therapist', created_at: '2024-01-03' }
-    ];
-    res.json(users);
-});
-
-app.post('/api/admin/users', (req, res) => {
-    const { username, password, name, role } = req.body;
-    res.json({ 
-        message: 'User created successfully (demo)',
-        user: { id: Date.now(), username, name, role }
+    const sql = 'SELECT * FROM contacts ORDER BY created_at DESC';
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
     });
+});
+
+app.post('/api/contacts', (req, res) => {
+    const { first_name, last_name, email, phone, primary_complaint, status } = req.body;
+    const sql = 'INSERT INTO contacts (first_name, last_name, email, phone, primary_complaint, status) VALUES (?, ?, ?, ?, ?, ?)';
+    
+    db.run(sql, [first_name, last_name, email, phone, primary_complaint, status || 'Lead'], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ id: this.lastID, message: 'Contact created successfully' });
+    });
+});
+
+app.get('/api/contacts/:id', (req, res) => {
+    const sql = 'SELECT * FROM contacts WHERE id = ?';
+    db.get(sql, [req.params.id], (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (!row) {
+            res.status(404).json({ error: 'Contact not found' });
+            return;
+        }
+        res.json(row);
+    });
+});
+
+app.put('/api/contacts/:id', (req, res) => {
+    const { first_name, last_name, email, phone, primary_complaint, status } = req.body;
+    const sql = 'UPDATE contacts SET first_name = ?, last_name = ?, email = ?, phone = ?, primary_complaint = ?, status = ? WHERE id = ?';
+    
+    db.run(sql, [first_name, last_name, email, phone, primary_complaint, status, req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'Contact not found' });
+            return;
+        }
+        res.json({ message: 'Contact updated successfully' });
+    });
+});
+
+app.delete('/api/contacts/:id', (req, res) => {
+    const sql = 'DELETE FROM contacts WHERE id = ?';
+    db.run(sql, [req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'Contact not found' });
+            return;
+        }
+        res.json({ message: 'Contact deleted successfully' });
+    });
+});
+
+// APPOINTMENTS ENDPOINTS
+app.get('/api/appointments', (req, res) => {
+    const sql = `SELECT a.*, c.first_name || ' ' || c.last_name as patient_name 
+                 FROM appointments a 
+                 LEFT JOIN contacts c ON a.contact_id = c.id 
+                 ORDER BY a.date_time DESC`;
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+app.post('/api/appointments', (req, res) => {
+    const { contact_id, date_time, type, notes, status } = req.body;
+    const sql = 'INSERT INTO appointments (contact_id, date_time, type, notes, status) VALUES (?, ?, ?, ?, ?)';
+    
+    db.run(sql, [contact_id, date_time, type, notes, status || 'Scheduled'], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ id: this.lastID, message: 'Appointment created successfully' });
+    });
+});
+
+app.put('/api/appointments/:id', (req, res) => {
+    const { contact_id, date_time, type, notes, status } = req.body;
+    const sql = 'UPDATE appointments SET contact_id = ?, date_time = ?, type = ?, notes = ?, status = ? WHERE id = ?';
+    
+    db.run(sql, [contact_id, date_time, type, notes, status, req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ message: 'Appointment updated successfully' });
+    });
+});
+
+app.delete('/api/appointments/:id', (req, res) => {
+    const sql = 'DELETE FROM appointments WHERE id = ?';
+    db.run(sql, [req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ message: 'Appointment deleted successfully' });
+    });
+});
+
+// INVOICES ENDPOINTS
+app.get('/api/invoices', (req, res) => {
+    const sql = `SELECT i.*, c.first_name || ' ' || c.last_name as contact_name 
+                 FROM invoices i 
+                 LEFT JOIN contacts c ON i.contact_id = c.id 
+                 ORDER BY i.created_at DESC`;
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+app.post('/api/invoices', (req, res) => {
+    const { contact_id, amount, due_date, services_rendered, status } = req.body;
+    const sql = 'INSERT INTO invoices (contact_id, amount, due_date, services_rendered, status) VALUES (?, ?, ?, ?, ?)';
+    
+    db.run(sql, [contact_id, amount, due_date, services_rendered, status || 'Sent'], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ id: this.lastID, message: 'Invoice created successfully' });
+    });
+});
+
+app.put('/api/invoices/:id', (req, res) => {
+    const { amount, due_date, services_rendered, status } = req.body;
+    const sql = 'UPDATE invoices SET amount = ?, due_date = ?, services_rendered = ?, status = ? WHERE id = ?';
+    
+    db.run(sql, [amount, due_date, services_rendered, status, req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ message: 'Invoice updated successfully' });
+    });
+});
+
+app.delete('/api/invoices/:id', (req, res) => {
+    const sql = 'DELETE FROM invoices WHERE id = ?';
+    db.run(sql, [req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ message: 'Invoice deleted successfully' });
+    });
+});
+
+// ADMIN USER MANAGEMENT ENDPOINTS (Working with Database)
+app.get('/api/admin/users', (req, res) => {
+    const sql = 'SELECT id, username, name, role, created_at FROM users ORDER BY created_at DESC';
+    
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+app.post('/api/admin/users', async (req, res) => {
+    try {
+        const { username, password, name, role } = req.body;
+        
+        // Hash password
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(password, saltRounds);
+
+        const sql = 'INSERT INTO users (username, password_hash, name, role) VALUES (?, ?, ?, ?)';
+        db.run(sql, [username, passwordHash, name, role], function(err) {
+            if (err) {
+                res.status(400).json({ error: err.message });
+                return;
+            }
+            res.json({ 
+                message: 'User created successfully',
+                user: { id: this.lastID, username, name, role }
+            });
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error during user creation' });
+    }
 });
 
 app.put('/api/admin/users/:id', (req, res) => {
     const { name, role } = req.body;
-    res.json({ message: 'User updated successfully (demo)' });
+    const userId = parseInt(req.params.id);
+    
+    const sql = 'UPDATE users SET name = ?, role = ? WHERE id = ?';
+    
+    db.run(sql, [name, role, userId], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+        res.json({ message: 'User updated successfully' });
+    });
 });
 
 app.delete('/api/admin/users/:id', (req, res) => {
-    res.json({ message: 'User deleted successfully (demo)' });
+    const userId = parseInt(req.params.id);
+    
+    const sql = 'DELETE FROM users WHERE id = ?';
+    
+    db.run(sql, [userId], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'User not found' });
+            return;
+        }
+        res.json({ message: 'User deleted successfully' });
+    });
 });
 
-// ADMIN ANALYTICS ENDPOINTS (Demo Data)
+// ADMIN ANALYTICS ENDPOINTS (Real Database Queries)
 app.get('/api/admin/analytics/overview', (req, res) => {
-    res.json({
-        total_patients: 3,
-        total_appointments: 5,
-        total_revenue: 1250.00,
-        conversion_rate: 66.67
+    const queries = {
+        total_patients: 'SELECT COUNT(*) as count FROM contacts',
+        total_appointments: 'SELECT COUNT(*) as count FROM appointments',
+        total_revenue: 'SELECT SUM(amount) as total FROM invoices WHERE status = "Paid"',
+        conversion_rate: 'SELECT COUNT(*) as total, SUM(CASE WHEN status = "Client" THEN 1 ELSE 0 END) as converted FROM contacts'
+    };
+    
+    const results = {};
+    let completed = 0;
+    
+    Object.keys(queries).forEach(key => {
+        db.get(queries[key], [], (err, row) => {
+            if (err) {
+                console.error(`Error in ${key}:`, err);
+                results[key] = 0;
+            } else {
+                if (key === 'conversion_rate') {
+                    results[key] = row.total > 0 ? ((row.converted / row.total) * 100).toFixed(2) : 0;
+                } else {
+                    results[key] = row.count || row.total || 0;
+                }
+            }
+            
+            completed++;
+            if (completed === Object.keys(queries).length) {
+                res.json(results);
+            }
+        });
     });
 });
 
 app.get('/api/admin/analytics/appointments', (req, res) => {
-    res.json({
-        by_type: [
-            { type: 'Initial Assessment', count: 2 },
-            { type: '1-on-1 Treatment', count: 3 }
-        ],
-        by_therapist: [
-            { name: 'Dr. Sarah Johnson', count: 3 },
-            { name: 'Dr. Mike Chen', count: 2 }
-        ],
-        by_month: [
-            { month: '2024-01', count: 3 },
-            { month: '2024-02', count: 2 }
-        ]
+    const queries = {
+        by_type: 'SELECT type, COUNT(*) as count FROM appointments GROUP BY type',
+        by_therapist: `SELECT u.name, COUNT(*) as count 
+                      FROM appointments a 
+                      LEFT JOIN users u ON a.assigned_to = u.id 
+                      WHERE u.name IS NOT NULL 
+                      GROUP BY u.name`,
+        by_month: `SELECT strftime('%Y-%m', date_time) as month, COUNT(*) as count 
+                  FROM appointments 
+                  GROUP BY strftime('%Y-%m', date_time) 
+                  ORDER BY month DESC LIMIT 12`
+    };
+    
+    const results = {};
+    let completed = 0;
+    
+    Object.keys(queries).forEach(key => {
+        db.all(queries[key], [], (err, rows) => {
+            if (err) {
+                console.error(`Error in ${key}:`, err);
+                results[key] = [];
+            } else {
+                results[key] = rows;
+            }
+            
+            completed++;
+            if (completed === Object.keys(queries).length) {
+                res.json(results);
+            }
+        });
     });
 });
 
 app.get('/api/admin/analytics/patients', (req, res) => {
-    res.json({
-        new_per_month: [
-            { month: '2024-01', count: 2 },
-            { month: '2024-02', count: 1 }
-        ],
-        common_complaints: [
-            { primary_complaint: 'Lower back pain', count: 1 },
-            { primary_complaint: 'Neck pain', count: 1 },
-            { primary_complaint: 'Shoulder pain', count: 1 }
-        ]
+    const queries = {
+        new_per_month: `SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count 
+                       FROM contacts 
+                       GROUP BY strftime('%Y-%m', created_at) 
+                       ORDER BY month DESC LIMIT 12`,
+        common_complaints: `SELECT primary_complaint, COUNT(*) as count 
+                          FROM contacts 
+                          WHERE primary_complaint IS NOT NULL 
+                          GROUP BY primary_complaint 
+                          ORDER BY count DESC LIMIT 10`
+    };
+    
+    const results = {};
+    let completed = 0;
+    
+    Object.keys(queries).forEach(key => {
+        db.all(queries[key], [], (err, rows) => {
+            if (err) {
+                console.error(`Error in ${key}:`, err);
+                results[key] = [];
+            } else {
+                results[key] = rows;
+            }
+            
+            completed++;
+            if (completed === Object.keys(queries).length) {
+                res.json(results);
+            }
+        });
     });
 });
 
-// APPOINTMENTS ENDPOINTS (Demo Data)
-app.get('/api/appointments', (req, res) => {
-    const appointments = [
-        { id: 1, contact_id: 1, patient_name: 'John Smith', date_time: '2024-01-15 10:00:00', type: 'Initial Assessment', status: 'Completed' },
-        { id: 2, contact_id: 2, patient_name: 'Sarah Wilson', date_time: '2024-01-20 14:00:00', type: 'Initial Assessment', status: 'Scheduled' },
-        { id: 3, contact_id: 3, patient_name: 'Mike Brown', date_time: '2024-01-25 09:00:00', type: '1-on-1 Treatment', status: 'Completed' }
-    ];
-    res.json(appointments);
-});
-
-// INVOICES ENDPOINTS (Demo Data)
-app.get('/api/invoices', (req, res) => {
-    const invoices = [
-        { id: 1, contact_id: 1, contact_name: 'John Smith', amount: 150.00, status: 'Paid', due_date: '2024-01-30', services_rendered: 'Initial Assessment' },
-        { id: 2, contact_id: 2, contact_name: 'Sarah Wilson', amount: 120.00, status: 'Sent', due_date: '2024-02-05', services_rendered: '1-on-1 Treatment' },
-        { id: 3, contact_id: 3, contact_name: 'Mike Brown', amount: 150.00, status: 'Paid', due_date: '2024-02-10', services_rendered: 'Initial Assessment' }
-    ];
-    res.json(invoices);
-});
-
-// REPORTS ENDPOINTS (Demo Data)
+// REPORTS ENDPOINTS (Real Database Queries)
 app.get('/api/reports/leads-per-month', (req, res) => {
-    res.json([
-        { month: '2024-01', count: 2 },
-        { month: '2024-02', count: 1 }
-    ]);
+    const sql = `SELECT strftime('%Y-%m', created_at) as month, COUNT(*) as count 
+                 FROM contacts 
+                 WHERE status = 'Lead'
+                 GROUP BY strftime('%Y-%m', created_at) 
+                 ORDER BY month DESC LIMIT 12`;
+    
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
 });
 
 app.get('/api/reports/conversion-rate', (req, res) => {
-    res.json({ rate: 66.67, total_leads: 3, converted: 2 });
+    const sql = `SELECT COUNT(*) as total, 
+                        SUM(CASE WHEN status = 'Client' THEN 1 ELSE 0 END) as converted 
+                 FROM contacts`;
+    
+    db.get(sql, [], (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        const rate = row.total > 0 ? ((row.converted / row.total) * 100).toFixed(2) : 0;
+        res.json({ rate: parseFloat(rate), total_leads: row.total, converted: row.converted });
+    });
 });
 
 app.get('/api/reports/revenue-per-month', (req, res) => {
-    res.json([
-        { month: '2024-01', revenue: 800.00 },
-        { month: '2024-02', revenue: 450.00 }
-    ]);
+    const sql = `SELECT strftime('%Y-%m', created_at) as month, SUM(amount) as revenue 
+                 FROM invoices 
+                 WHERE status = 'Paid'
+                 GROUP BY strftime('%Y-%m', created_at) 
+                 ORDER BY month DESC LIMIT 12`;
+    
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
 });
 
-// TREATMENT PLANS ENDPOINTS (Demo Data)
+// TREATMENT PLANS ENDPOINTS (Real Database Queries)
 app.get('/api/treatment-plans', (req, res) => {
-    const plans = [
-        { id: 1, name: '6-Week Posture Correction Plan', description: 'Comprehensive posture correction program', duration: '6 weeks', price: 299.99 },
-        { id: 2, name: '1-on-1 Online Coaching Package', description: 'Personal coaching sessions', duration: '4 weeks', price: 199.99 },
-        { id: 3, name: 'Back Pain Relief Program', description: 'Specialized program for back pain', duration: '8 weeks', price: 399.99 }
-    ];
-    res.json(plans);
+    const sql = 'SELECT * FROM treatment_plans ORDER BY created_at DESC';
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
 });
 
 app.get('/api/treatment-plans/:id', (req, res) => {
-    const plan = { 
-        id: req.params.id, 
-        name: 'Sample Treatment Plan', 
-        description: 'Demo treatment plan',
-        template_content: 'Week 1: Assessment\nWeek 2-4: Treatment\nWeek 5-6: Maintenance'
-    };
-    res.json(plan);
+    const sql = 'SELECT * FROM treatment_plans WHERE id = ?';
+    db.get(sql, [req.params.id], (err, row) => {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (!row) {
+            res.status(404).json({ error: 'Treatment plan not found' });
+            return;
+        }
+        res.json(row);
+    });
+});
+
+// SEND TEMPLATE ENDPOINT
+app.post('/api/send-template', (req, res) => {
+    const { templateId, contactId } = req.body;
+    // In a real app, this would send email/SMS
+    res.json({ message: 'Template sent successfully to patient' });
 });
 
 // Catch-all route for SPA - serve index.html for any non-API route
