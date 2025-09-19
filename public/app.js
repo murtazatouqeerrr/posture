@@ -184,7 +184,11 @@ async function loadDashboardView() {
                                                 <span class="text-white font-medium">${contact.first_name.charAt(0)}${contact.last_name.charAt(0)}</span>
                                             </div>
                                             <div class="ml-4">
-                                                <div class="text-sm font-medium text-gray-900">${contact.first_name} ${contact.last_name}</div>
+                                                <div class="text-sm font-medium text-gray-900">
+                                                    <a href="patient-profile.html?id=${contact.id}" class="text-primary hover:text-primary-dark cursor-pointer">
+                                                        ${contact.first_name} ${contact.last_name}
+                                                    </a>
+                                                </div>
                                                 <div class="text-sm text-gray-500">ID: ${contact.id}</div>
                                             </div>
                                         </div>

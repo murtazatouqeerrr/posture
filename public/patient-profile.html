@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Profile - Posture Perfect CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#0F766E'
+                        primary: '#0F766E',
+                        'primary-dark': '#0D5B56',
+                        secondary: '#3B82F6',
+                        'secondary-dark': '#2563EB'
                     }
                 }
             }
@@ -18,233 +22,865 @@
     </script>
 </head>
 <body class="bg-gray-50">
-    <!-- Sidebar Navigation -->
-    <div class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-        <div class="flex items-center justify-center h-16 bg-primary">
-            <img src="https://sa1s3optim.patientpop.com/assets/images/provider/photos/2754856.png" alt="Logo" class="h-8 w-auto">
-            <span class="ml-3 text-white font-bold text-lg">Posture Perfect</span>
-        </div>
-        
-        <nav class="mt-8">
-            <div class="px-4 space-y-2">
-                <a href="index.html" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                    </svg>
-                    Dashboard
-                </a>
-                
-                <a href="calendar.html" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v16a2 2 0 002 2z"></path>
-                    </svg>
-                    Calendar
-                </a>
-                
-                <a href="invoices.html" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Invoices
-                </a>
-                
-                <a href="reports.html" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2-2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                    </svg>
-                    Reports
-                </a>
-                
-                <a href="templates.html" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    Templates
-                </a>
-                
-                <a href="admin-dashboard.html" class="flex items-center px-4 py-3 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    Admin
-                </a>
-            </div>
-        </nav>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="ml-64">
-        <!-- Top Header -->
+    <div class="min-h-screen">
+        <!-- Header -->
         <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
             <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-semibold text-gray-900">Patient Profile</h1>
-                    <p class="text-sm text-gray-500 mt-1">Detailed patient information and treatment history</p>
+                <div class="flex items-center">
+                    <a href="index.html" class="text-primary hover:text-primary-dark mr-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </a>
+                    <h1 id="patientName" class="text-2xl font-semibold text-gray-900">Patient Profile</h1>
                 </div>
             </div>
         </header>
 
         <!-- Main Content -->
-        <main class="p-6">
-            <div class="space-y-6">
-                <!-- Patient Basic Info -->
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg border-l-4 border-primary">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h2 id="patientName" class="text-xl font-semibold text-gray-900 mb-4">Loading...</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Email</dt>
-                                <dd id="patientEmail" class="mt-1 text-sm text-gray-900">-</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Phone</dt>
-                                <dd id="patientPhone" class="mt-1 text-sm text-gray-900">-</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Status</dt>
-                                <dd id="patientStatus" class="mt-1 text-sm text-gray-900">-</dd>
-                            </div>
-                            <div>
-                                <dt class="text-sm font-medium text-gray-500">Primary Complaint</dt>
-                                <dd id="patientComplaint" class="mt-1 text-sm text-gray-900">-</dd>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex space-x-4">
-                    <button id="addAssessmentBtn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-teal-700">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Add Initial Assessment
-                    </button>
-                    <button id="logSessionBtn" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Log New Session
-                    </button>
-                </div>
-
-                <!-- Timeline History -->
-                <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-                    <div class="px-4 py-5 sm:p-6">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Patient Timeline</h3>
-                        <div id="timeline" class="space-y-4">
-                            <!-- Timeline items will be loaded here -->
-                        </div>
-                    </div>
+        <main id="patientProfile" class="p-6">
+            <div class="flex items-center justify-center h-64">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Loading patient profile...</p>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Add Assessment Modal -->
-    <div id="assessmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Add Initial Assessment</h3>
-                    <button class="close-assessment text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <script>
+        let currentPatient = null;
+
+        // Global notification function
+        function showNotification(message, type = 'info') {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            
+            const bgColor = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500',
+                info: 'bg-blue-500'
+            }[type] || 'bg-blue-500';
+            
+            notification.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </button>
                 </div>
-                
-                <form id="assessmentForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Assessment Date & Time</label>
-                        <input type="datetime-local" id="assessmentDate" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Therapist Notes</label>
-                        <textarea id="therapistNotes" rows="3" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Observed Posture</label>
-                        <textarea id="observedPosture" rows="3" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Recommendations</label>
-                        <textarea id="recommendations" rows="3" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"></textarea>
-                    </div>
-                    
-                    <div class="flex justify-end space-x-3 pt-4">
-                        <button type="button" class="close-assessment px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Cancel</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-teal-700 rounded-md">Save Assessment</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
 
-    <!-- Log Session Modal -->
-    <div id="sessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-medium text-gray-900">Log New Session</h3>
-                    <button class="close-session text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
+        // Get patient ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const patientId = urlParams.get('id');
+
+        if (!patientId) {
+            document.getElementById('patientProfile').innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-xl font-semibold text-red-600">Error</h2>
+                    <p class="text-gray-600 mt-2">No patient ID provided</p>
+                    <a href="index.html" class="mt-4 inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark">
+                        Back to Dashboard
+                    </a>
                 </div>
-                
-                <form id="sessionForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Session Date & Time</label>
-                        <input type="datetime-local" id="sessionDate" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Session Type</label>
-                        <select id="sessionType" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                            <option value="">Select Session Type</option>
-                            <option value="Initial Assessment">Initial Assessment</option>
-                            <option value="1-on-1 Treatment">1-on-1 Treatment</option>
-                            <option value="Follow-up">Follow-up</option>
-                            <option value="Progress Check">Progress Check</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Session Notes</label>
-                        <textarea id="sessionNotes" rows="3" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"></textarea>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Pain Level Before (1-10)</label>
-                            <input type="number" id="painLevelPre" min="1" max="10" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Pain Level After (1-10)</label>
-                            <input type="number" id="painLevelPost" min="1" max="10" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm">
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Homework Assigned</label>
-                        <textarea id="homeworkAssigned" rows="2" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary sm:text-sm"></textarea>
-                    </div>
-                    
-                    <div class="flex justify-end space-x-3 pt-4">
-                        <button type="button" class="close-session px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Cancel</button>
-                        <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md">Log Session</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+            `;
+        } else {
+            loadPatientProfile(patientId);
+        }
 
-    <script src="patient-profile.js"></script>
+        async function loadPatientProfile(id) {
+            try {
+                const response = await fetch(`/api/contacts/${id}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                currentPatient = await response.json();
+
+                document.getElementById('patientName').textContent = `${currentPatient.first_name} ${currentPatient.last_name}`;
+                
+                document.getElementById('patientProfile').innerHTML = `
+                    <div class="max-w-6xl mx-auto">
+                        <!-- Patient Info Card -->
+                        <div class="bg-white rounded-lg shadow p-6 mb-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center">
+                                    <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                                        <span class="text-white text-xl font-medium">${currentPatient.first_name.charAt(0)}${currentPatient.last_name.charAt(0)}</span>
+                                    </div>
+                                    <div class="ml-4">
+                                        <h2 class="text-2xl font-bold text-gray-900">${currentPatient.first_name} ${currentPatient.last_name}</h2>
+                                        <p class="text-gray-600">${currentPatient.email}</p>
+                                        <p class="text-gray-600">${currentPatient.phone || 'No phone'}</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="editPatient()" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark">
+                                        Edit Patient
+                                    </button>
+                                    <button onclick="showSubscriptionModal()" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700">
+                                        Manage Subscription
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Status</label>
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${currentPatient.status === 'Client' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                        ${currentPatient.status}
+                                    </span>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Source</label>
+                                    <p class="text-sm text-gray-900">${currentPatient.source || 'Unknown'}</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Member Since</label>
+                                    <p class="text-sm text-gray-900">${formatDate(currentPatient.created_at)}</p>
+                                </div>
+                                <div class="md:col-span-3">
+                                    <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
+                                    <p class="text-sm text-gray-900">${currentPatient.primary_complaint || 'No complaint recorded'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabs Navigation -->
+                        <div class="bg-white rounded-lg shadow mb-6">
+                            <div class="border-b border-gray-200">
+                                <nav class="-mb-px flex space-x-8 px-6">
+                                    <button onclick="switchTab('billing')" class="tab-btn py-4 px-1 border-b-2 border-primary text-primary font-medium text-sm">
+                                        Billing & Payments
+                                    </button>
+                                    <button onclick="switchTab('assessments')" class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                                        Assessments
+                                    </button>
+                                    <button onclick="switchTab('sessions')" class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                                        Sessions
+                                    </button>
+                                    <button onclick="switchTab('timeline')" class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                                        Timeline
+                                    </button>
+                                </nav>
+                            </div>
+                            <div id="tabContent" class="p-6">
+                                <!-- Content loads here -->
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Load default tab
+                switchTab('billing');
+
+            } catch (error) {
+                console.error('❌ Error loading patient:', error);
+                document.getElementById('patientProfile').innerHTML = `
+                    <div class="text-center">
+                        <h2 class="text-xl font-semibold text-red-600">Error</h2>
+                        <p class="text-gray-600 mt-2">Failed to load patient profile</p>
+                        <a href="index.html" class="mt-4 inline-block bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark">
+                            Back to Dashboard
+                        </a>
+                    </div>
+                `;
+            }
+        }
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            
+            // Find and activate the clicked tab
+            const activeBtn = document.querySelector(`button[onclick="switchTab('${tabName}')"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('border-primary', 'text-primary');
+                activeBtn.classList.remove('border-transparent', 'text-gray-500');
+            }
+
+            // Load tab content
+            switch(tabName) {
+                case 'billing':
+                    loadBillingTab();
+                    break;
+                case 'assessments':
+                    loadAssessmentsTab();
+                    break;
+                case 'sessions':
+                    loadSessionsTab();
+                    break;
+                case 'timeline':
+                    loadTimelineTab();
+                    break;
+            }
+        }
+
+        async function loadBillingTab() {
+            document.getElementById('tabContent').innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Billing & Payment History</h3>
+                        <div class="space-x-2">
+                            <button onclick="createInvoice()" class="bg-secondary text-white px-4 py-2 rounded-md hover:bg-secondary-dark">
+                                Create Invoice
+                            </button>
+                            <button onclick="processPayment()" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
+                                Process Payment
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="billingContent">Loading billing information...</div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/api/invoices`);
+                const invoices = await response.json();
+                const patientInvoices = invoices.filter(inv => inv.contact_id == patientId);
+
+                document.getElementById('billingContent').innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Invoice</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${patientInvoices.length > 0 ? patientInvoices.map(invoice => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">#${invoice.id}</div>
+                                            <div class="text-sm text-gray-500">${formatDate(invoice.invoice_date)}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-900">${invoice.service_description}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">$${invoice.amount}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(invoice.status)}">
+                                                ${invoice.status}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            ${invoice.status !== 'Paid' ? `<button onclick="payInvoice(${invoice.id})" class="text-green-600 hover:text-green-900">Pay Now</button>` : 'Paid'}
+                                        </td>
+                                    </tr>
+                                `).join('') : `
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">No invoices found</td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('billingContent').innerHTML = '<p class="text-red-500">Error loading billing information</p>';
+            }
+        }
+
+        async function loadAssessmentsTab() {
+            document.getElementById('tabContent').innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Patient Assessments</h3>
+                        <button onclick="addAssessment()" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark">
+                            Add Assessment
+                        </button>
+                    </div>
+                    
+                    <div id="assessmentsContent">Loading assessments...</div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/api/patients/${patientId}/assessments`);
+                const assessments = await response.json();
+
+                document.getElementById('assessmentsContent').innerHTML = assessments.length > 0 ? 
+                    assessments.map(assessment => `
+                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Assessment - ${formatDate(assessment.assessment_date)}</h4>
+                                    <p class="text-sm text-gray-600 mt-1">Pain Level: ${assessment.pain_level}/10</p>
+                                    <p class="text-sm text-gray-600">Therapist: ${assessment.therapist}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <p class="text-sm text-gray-700">${assessment.notes}</p>
+                            </div>
+                        </div>
+                    `).join('') : '<p class="text-gray-500">No assessments found</p>';
+            } catch (error) {
+                document.getElementById('assessmentsContent').innerHTML = '<p class="text-red-500">Error loading assessments</p>';
+            }
+        }
+
+        async function loadSessionsTab() {
+            document.getElementById('tabContent').innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-gray-900">Treatment Sessions</h3>
+                        <button onclick="logSession()" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark">
+                            Log Session
+                        </button>
+                    </div>
+                    
+                    <div id="sessionsContent">Loading sessions...</div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/api/patients/${patientId}/sessions`);
+                const sessions = await response.json();
+
+                document.getElementById('sessionsContent').innerHTML = sessions.length > 0 ? 
+                    sessions.map(session => `
+                        <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Session - ${formatDate(session.session_date)}</h4>
+                                    <p class="text-sm text-gray-600 mt-1">Pain: ${session.pre_pain_level}/10 → ${session.post_pain_level}/10</p>
+                                    <p class="text-sm text-gray-600">Therapist: ${session.therapist}</p>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <p class="text-sm text-gray-700">${session.notes}</p>
+                            </div>
+                        </div>
+                    `).join('') : '<p class="text-gray-500">No sessions found</p>';
+            } catch (error) {
+                document.getElementById('sessionsContent').innerHTML = '<p class="text-red-500">Error loading sessions</p>';
+            }
+        }
+
+        async function loadTimelineTab() {
+            document.getElementById('tabContent').innerHTML = `
+                <div class="space-y-6">
+                    <h3 class="text-lg font-medium text-gray-900">Patient Timeline</h3>
+                    <div id="timelineContent">Loading timeline...</div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/api/patients/${patientId}/timeline`);
+                const timeline = await response.json();
+
+                document.getElementById('timelineContent').innerHTML = timeline.length > 0 ? 
+                    timeline.map(event => `
+                        <div class="flex items-start space-x-3 pb-4">
+                            <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-medium text-gray-900">${event.title}</h4>
+                                <p class="text-sm text-gray-600">${event.description}</p>
+                                <p class="text-xs text-gray-500 mt-1">${formatDate(event.date)}</p>
+                            </div>
+                        </div>
+                    `).join('') : '<p class="text-gray-500">No timeline events found</p>';
+            } catch (error) {
+                document.getElementById('timelineContent').innerHTML = '<p class="text-red-500">Error loading timeline</p>';
+            }
+        }
+
+        // Modal Functions
+        function editPatient() {
+            const modalHTML = `
+                <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Edit Patient</h3>
+                                <button onclick="closeModal('editModal')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <form id="editPatientForm" class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">First Name</label>
+                                        <input type="text" name="first_name" value="${currentPatient.first_name}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                                        <input type="text" name="last_name" value="${currentPatient.last_name}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                                        <input type="email" name="email" value="${currentPatient.email}" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Phone</label>
+                                        <input type="tel" name="phone" value="${currentPatient.phone || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
+                                    <textarea name="primary_complaint" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">${currentPatient.primary_complaint || ''}</textarea>
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                                        <select name="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                            <option value="Lead" ${currentPatient.status === 'Lead' ? 'selected' : ''}>Lead</option>
+                                            <option value="Client" ${currentPatient.status === 'Client' ? 'selected' : ''}>Client</option>
+                                            <option value="Inactive" ${currentPatient.status === 'Inactive' ? 'selected' : ''}>Inactive</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Source</label>
+                                        <input type="text" name="source" value="${currentPatient.source || ''}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3 pt-4">
+                                    <button type="button" onclick="closeModal('editModal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            document.getElementById('editPatientForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await savePatientChanges(new FormData(e.target));
+            });
+        }
+
+        function createInvoice() {
+            window.location.href = `index.html#/invoices`;
+        }
+
+        function processPayment() {
+            const modalHTML = `
+                <div id="paymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Process Payment</h3>
+                                <button onclick="closeModal('paymentModal')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <form id="paymentForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Payment Method</label>
+                                    <select name="payment_method" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                        <option value="">Select Payment Method</option>
+                                        <option value="credit_card">Credit Card</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="check">Check</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Amount ($)</label>
+                                    <input type="number" name="amount" step="0.01" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Service Description</label>
+                                    <input type="text" name="service" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Notes</label>
+                                    <textarea name="notes" rows="3" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"></textarea>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3 pt-4">
+                                    <button type="button" onclick="closeModal('paymentModal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700">Process Payment</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await savePayment(new FormData(e.target));
+            });
+        }
+
+        function addAssessment() {
+            const modalHTML = `
+                <div id="assessmentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Add Assessment</h3>
+                                <button onclick="closeModal('assessmentModal')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <form id="assessmentForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Pain Level (1-10)</label>
+                                    <input type="number" name="pain_level" min="1" max="10" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Therapist</label>
+                                    <input type="text" name="therapist" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Assessment Notes</label>
+                                    <textarea name="notes" rows="4" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"></textarea>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3 pt-4">
+                                    <button type="button" onclick="closeModal('assessmentModal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">Save Assessment</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            document.getElementById('assessmentForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveAssessment(new FormData(e.target));
+            });
+        }
+
+        function logSession() {
+            const modalHTML = `
+                <div id="sessionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Log Session</h3>
+                                <button onclick="closeModal('sessionModal')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <form id="sessionForm" class="space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Pre-Session Pain (1-10)</label>
+                                        <input type="number" name="pre_pain_level" min="1" max="10" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Post-Session Pain (1-10)</label>
+                                        <input type="number" name="post_pain_level" min="1" max="10" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Therapist</label>
+                                    <input type="text" name="therapist" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Session Notes</label>
+                                    <textarea name="notes" rows="4" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"></textarea>
+                                </div>
+                                
+                                <div class="flex justify-end space-x-3 pt-4">
+                                    <button type="button" onclick="closeModal('sessionModal')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">Save Session</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            
+            document.getElementById('sessionForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await saveSession(new FormData(e.target));
+            });
+        }
+
+        function showSubscriptionModal() {
+            const modalHTML = `
+                <div id="subscriptionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+                    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-medium text-gray-900">Manage Subscription</h3>
+                                <button onclick="closeModal('subscriptionModal')" class="text-gray-400 hover:text-gray-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <div id="subscriptionContent">Loading subscription plans...</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            loadSubscriptionPlans();
+        }
+
+        async function loadSubscriptionPlans() {
+            try {
+                const response = await fetch('/api/subscription-plans');
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const plans = await response.json();
+                
+                document.getElementById('subscriptionContent').innerHTML = `
+                    <div class="space-y-4">
+                        <h4 class="font-medium text-gray-900">Available Plans</h4>
+                        ${plans.map(plan => `
+                            <div class="border rounded-lg p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h5 class="font-medium text-gray-900">${plan.name}</h5>
+                                        <p class="text-sm text-gray-600">${plan.description}</p>
+                                        <p class="text-lg font-semibold text-primary mt-2">$${plan.price}/${plan.interval}</p>
+                                    </div>
+                                    <button onclick="subscribeToplan(${plan.id})" class="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark text-sm">
+                                        Subscribe
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                        
+                        <div class="pt-4 border-t">
+                            <button onclick="closeModal('subscriptionModal')" class="w-full bg-gray-100 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-200">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('subscriptionContent').innerHTML = '<p class="text-red-500">Error loading subscription plans</p>';
+            }
+        }
+
+        async function payInvoice(invoiceId) {
+            try {
+                const response = await fetch(`/api/invoices/${invoiceId}/process-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                showNotification('Payment processed successfully', 'success');
+                loadBillingTab(); // Refresh billing tab
+            } catch (error) {
+                showNotification('Error processing payment', 'error');
+            }
+        }
+
+        async function savePatientChanges(formData) {
+            try {
+                const data = {
+                    first_name: formData.get('first_name'),
+                    last_name: formData.get('last_name'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    primary_complaint: formData.get('primary_complaint'),
+                    status: formData.get('status'),
+                    source: formData.get('source')
+                };
+                
+                const response = await fetch(`/api/contacts/${patientId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                showNotification('Patient updated successfully', 'success');
+                closeModal('editModal');
+                loadPatientProfile(patientId); // Refresh profile
+            } catch (error) {
+                showNotification('Error updating patient', 'error');
+            }
+        }
+
+        async function saveAssessment(formData) {
+            try {
+                const data = {
+                    pain_level: formData.get('pain_level'),
+                    therapist: formData.get('therapist'),
+                    notes: formData.get('notes')
+                };
+                
+                const response = await fetch(`/api/patients/${patientId}/assessment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                showNotification('Assessment saved successfully', 'success');
+                closeModal('assessmentModal');
+                loadAssessmentsTab(); // Refresh assessments tab
+            } catch (error) {
+                showNotification('Error saving assessment', 'error');
+            }
+        }
+
+        async function saveSession(formData) {
+            try {
+                const data = {
+                    pre_pain_level: formData.get('pre_pain_level'),
+                    post_pain_level: formData.get('post_pain_level'),
+                    therapist: formData.get('therapist'),
+                    notes: formData.get('notes')
+                };
+                
+                const response = await fetch(`/api/patients/${patientId}/session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                showNotification('Session logged successfully', 'success');
+                closeModal('sessionModal');
+                loadSessionsTab(); // Refresh sessions tab
+            } catch (error) {
+                showNotification('Error logging session', 'error');
+            }
+        }
+
+        async function savePayment(formData) {
+            try {
+                const data = {
+                    contact_id: patientId,
+                    service_description: formData.get('service'),
+                    amount: formData.get('amount'),
+                    payment_method: formData.get('payment_method'),
+                    notes: formData.get('notes')
+                };
+                
+                const response = await fetch('/api/invoices', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                // Immediately mark as paid
+                const result = await response.json();
+                await fetch(`/api/invoices/${result.id}/process-payment`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                showNotification('Payment processed successfully', 'success');
+                closeModal('paymentModal');
+                loadBillingTab(); // Refresh billing tab
+            } catch (error) {
+                showNotification('Error processing payment', 'error');
+            }
+        }
+
+        async function subscribeToplan(planId) {
+            try {
+                const response = await fetch('/api/subscriptions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contact_id: patientId,
+                        plan_id: planId
+                    })
+                });
+                
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                showNotification('Subscription created successfully', 'success');
+                closeModal('subscriptionModal');
+            } catch (error) {
+                showNotification('Error creating subscription', 'error');
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.remove();
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric'
+            });
+        }
+
+        function getStatusColor(status) {
+            switch (status) {
+                case 'Paid': return 'bg-green-100 text-green-800';
+                case 'Sent': return 'bg-blue-100 text-blue-800';
+                case 'Overdue': return 'bg-red-100 text-red-800';
+                default: return 'bg-gray-100 text-gray-800';
+            }
+        }
+    </script>
 </body>
 </html>

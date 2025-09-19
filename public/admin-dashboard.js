@@ -1,15 +1,62 @@
 // Admin Dashboard Management
-let users = [];
-let analytics = {};
+let adminData = {
+    users: [],
+    analytics: {},
+    contacts: [],
+    invoices: []
+};
+
+// Global notification function
+function showNotification(message, type = 'info') {
+    const container = document.getElementById('notificationContainer') || createNotificationContainer();
+    const notification = document.createElement('div');
+    
+    const bgColor = {
+        success: 'bg-green-500',
+        error: 'bg-red-500',
+        warning: 'bg-yellow-500',
+        info: 'bg-blue-500'
+    }[type] || 'bg-blue-500';
+    
+    notification.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+    notification.innerHTML = `
+        <div class="flex items-center justify-between">
+            <span>${message}</span>
+            <button class="ml-4 text-white hover:text-gray-200" onclick="this.parentElement.parentElement.remove()">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
+
+function createNotificationContainer() {
+    const container = document.createElement('div');
+    container.id = 'notificationContainer';
+    container.className = 'fixed top-4 right-4 z-50 space-y-2';
+    document.body.appendChild(container);
+    return container;
+}
 
 async function loadAdminView() {
     console.log('⚙️ Loading admin dashboard...');
     
     try {
-        // Fetch users and analytics data
-        const [usersResponse, analyticsResponse] = await Promise.all([
+        // Fetch real data from multiple endpoints
+        const [usersResponse, analyticsResponse, contactsResponse, invoicesResponse] = await Promise.all([
             fetch('/api/admin/users'),
-            fetch('/api/admin/analytics/financial')
+            fetch('/api/admin/analytics/financial'),
+            fetch('/api/contacts'),
+            fetch('/api/invoices')
         ]);
 
         if (!usersResponse.ok) {
@@ -19,10 +66,12 @@ async function loadAdminView() {
             throw new Error(`Failed to fetch analytics: ${analyticsResponse.status}`);
         }
 
-        users = await usersResponse.json();
-        analytics = await analyticsResponse.json();
+        adminData.users = await usersResponse.json();
+        adminData.analytics = await analyticsResponse.json();
+        adminData.contacts = await contactsResponse.json();
+        adminData.invoices = await invoicesResponse.json();
         
-        console.log(`✅ Loaded ${users.length} users and analytics data`);
+        console.log(`✅ Loaded ${adminData.users.length} users, ${adminData.contacts.length} contacts, and analytics data`);
         
         renderAdminView();
     } catch (error) {
@@ -61,7 +110,7 @@ function renderAdminView() {
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-600">Total Users</p>
-                            <p class="text-2xl font-semibold text-gray-900">${analytics.total_users || 0}</p>
+                            <p class="text-2xl font-semibold text-gray-900">${adminData.users.length}</p>
                         </div>
                     </div>
                 </div>
@@ -75,7 +124,7 @@ function renderAdminView() {
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-600">Total Patients</p>
-                            <p class="text-2xl font-semibold text-gray-900">${analytics.total_patients || 0}</p>
+                            <p class="text-2xl font-semibold text-gray-900">${adminData.contacts.length}</p>
                         </div>
                     </div>
                 </div>
@@ -89,7 +138,7 @@ function renderAdminView() {
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-600">Total Appointments</p>
-                            <p class="text-2xl font-semibold text-gray-900">${analytics.total_appointments || 0}</p>
+                            <p class="text-2xl font-semibold text-gray-900">0</p>
                         </div>
                     </div>
                 </div>
@@ -103,7 +152,7 @@ function renderAdminView() {
                         </div>
                         <div class="ml-4">
                             <p class="text-sm font-medium text-gray-600">Total Revenue</p>
-                            <p class="text-2xl font-semibold text-gray-900">$${(analytics.total_revenue || 0).toFixed(2)}</p>
+                            <p class="text-2xl font-semibold text-gray-900">$${adminData.analytics.totalRevenue || '0.00'}</p>
                         </div>
                     </div>
                 </div>
@@ -201,15 +250,15 @@ function renderUsersTab() {
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
-                        ${users.length > 0 ? users.map(user => `
+                        ${adminData.users.length > 0 ? adminData.users.map(user => `
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
-                                            <span class="text-white font-medium">${user.username.charAt(0).toUpperCase()}</span>
+                                            <span class="text-white font-medium">${(user.name || user.username || 'U').charAt(0).toUpperCase()}</span>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">${user.username}</div>
+                                            <div class="text-sm font-medium text-gray-900">${user.name || user.username || 'Unknown User'}</div>
                                             <div class="text-sm text-gray-500">ID: ${user.id}</div>
                                         </div>
                                     </div>
@@ -256,15 +305,15 @@ function renderAnalyticsTab() {
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Total Revenue:</span>
-                            <span class="font-medium text-green-600">$${(analytics.total_revenue || 0).toFixed(2)}</span>
+                            <span class="font-medium text-green-600">$${adminData.analytics.totalRevenue || '0.00'}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Pending Invoices:</span>
-                            <span class="font-medium text-yellow-600">${analytics.pending_invoices || 0}</span>
+                            <span class="font-medium text-yellow-600">${adminData.analytics.pendingInvoices || 0}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Outstanding Amount:</span>
-                            <span class="font-medium text-red-600">$${(analytics.outstanding_amount || 0).toFixed(2)}</span>
+                            <span class="font-medium text-red-600">$${adminData.analytics.monthlyRevenue || '0.00'}</span>
                         </div>
                     </div>
                 </div>
@@ -275,15 +324,15 @@ function renderAnalyticsTab() {
                     <div class="space-y-3">
                         <div class="flex justify-between">
                             <span class="text-gray-600">Total Users:</span>
-                            <span class="font-medium">${analytics.total_users || 0}</span>
+                            <span class="font-medium">${adminData.users.length}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Total Patients:</span>
-                            <span class="font-medium">${analytics.total_patients || 0}</span>
+                            <span class="font-medium">${adminData.contacts.length}</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-600">Total Appointments:</span>
-                            <span class="font-medium">${analytics.total_appointments || 0}</span>
+                            <span class="font-medium">0</span>
                         </div>
                     </div>
                 </div>

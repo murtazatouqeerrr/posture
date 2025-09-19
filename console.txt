@@ -1,22 +1,47 @@
- Admin loading error: TypeError: Cannot read properties of undefined (reading 'charAt')
-    at admin-dashboard.js:209:98
-    at Array.map (<anonymous>)
-    at renderUsersTab (admin-dashboard.js:204:52)
-    at loadAdminTab (admin-dashboard.js:166:33)
-    at renderAdminView (admin-dashboard.js:138:5)
-    at loadAdminView (admin-dashboard.js:27:9)
-    at async loadView (app.js:63:17)
-loadAdminView @ admin-dashboard.js:29Understand this error
-api/invoices:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
-invoices.js:273 ❌ Error creating invoice: Error: HTTP 500
-    at createInvoice (invoices.js:267:33)
-    at async HTMLFormElement.<anonymous> (invoices.js:248:9)
-createInvoice @ invoices.js:273Understand this error
-admin-dashboard.js:29 ❌ Admin loading error: TypeError: Cannot read properties of undefined (reading 'charAt')
-    at admin-dashboard.js:209:98
-    at Array.map (<anonymous>)
-    at renderUsersTab (admin-dashboard.js:204:52)
-    at loadAdminTab (admin-dashboard.js:166:33)
-    at renderAdminView (admin-dashboard.js:138:5)
-    at loadAdminView (admin-dashboard.js:27:9)
-    at async loadView (app.js:63:17)
+Logo
+Posture Perfect
+Dashboard
+Calendar
+Subscriptions
+Invoices
+Reports
+Templates
+Admin
+Admin
+Welcome to Posture Perfect CRM
+
+Admin User
+
+Administrator
+
+A
+Admin Dashboard
+System administration and analytics
+
+Total Users
+
+1
+
+Total Patients
+
+3
+
+Total Appointments
+
+0
+
+Total Revenue
+
+$150.00
+
+Users
+Analytics
+Settings
+User Management
+Add New User
+User	Email	Role	Created	Actions
+A
+Admin User
+ID: 1
+admin@postureperect.com
+Administrator	Invalid Date	Edit Delete

@@ -117,6 +117,17 @@ let treatmentPlans = [
     }
 ];
 
+let users = [
+    {
+        id: 1,
+        name: 'Admin User',
+        email: 'admin@postureperect.com',
+        role: 'Administrator',
+        created_at: new Date().toISOString()
+    }
+];
+
+let nextUserId = 2;
 let nextTreatmentPlanId = 2;
 let nextContactId = 4;
 let nextInvoiceId = 3;
@@ -210,27 +221,34 @@ app.post('/api/invoices', (req, res) => {
     console.log('💰 Creating invoice...');
     const { contact_id, service_description, amount, due_date } = req.body;
     
-    const contact = contacts.find(c => c.id == contact_id);
+    const contact = contacts.find(c => c.id == parseInt(contact_id));
     if (!contact) {
+        console.log(`❌ Contact not found for ID: ${contact_id}`);
         return res.status(404).json({ error: 'Contact not found' });
     }
     
-    const newInvoice = {
-        id: nextInvoiceId++,
-        contact_id,
-        first_name: contact.first_name,
-        last_name: contact.last_name,
-        email: contact.email,
-        service_description,
-        amount: parseFloat(amount).toFixed(2),
-        status: 'Sent',
-        invoice_date: new Date().toISOString(),
-        due_date: due_date || new Date(Date.now() + 30*24*60*60*1000).toISOString(),
-        stripe_payment_intent_id: null
-    };
-    
-    invoices.push(newInvoice);
-    res.json({ id: newInvoice.id, message: 'Invoice created successfully' });
+    try {
+        const newInvoice = {
+            id: nextInvoiceId++,
+            contact_id: parseInt(contact_id),
+            first_name: contact.first_name,
+            last_name: contact.last_name,
+            email: contact.email,
+            service_description,
+            amount: parseFloat(amount).toFixed(2),
+            status: 'Sent',
+            invoice_date: new Date().toISOString(),
+            due_date: due_date || new Date(Date.now() + 30*24*60*60*1000).toISOString(),
+            stripe_payment_intent_id: null
+        };
+        
+        invoices.push(newInvoice);
+        console.log('✅ Invoice created successfully:', newInvoice.id);
+        res.json({ id: newInvoice.id, message: 'Invoice created successfully' });
+    } catch (error) {
+        console.error('❌ Error creating invoice:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 app.put('/api/invoices/:id', (req, res) => {
@@ -351,11 +369,14 @@ app.post('/api/appointments', (req, res) => {
 // TREATMENT PLANS API
 app.get('/api/treatment-plans', (req, res) => {
     console.log('📋 Fetching treatment plans...');
+    console.log(`📋 Current plans count: ${treatmentPlans.length}`);
+    console.log('📋 Plans:', treatmentPlans);
     res.json(treatmentPlans);
 });
 
 app.post('/api/treatment-plans', (req, res) => {
     console.log('📋 Creating treatment plan...');
+    console.log('📋 Request body:', req.body);
     const { name, description, duration_weeks, sessions_per_week, price_per_session } = req.body;
     
     const newPlan = {
@@ -370,6 +391,8 @@ app.post('/api/treatment-plans', (req, res) => {
     };
     
     treatmentPlans.push(newPlan);
+    console.log('✅ Treatment plan created:', newPlan);
+    console.log(`📋 Total plans now: ${treatmentPlans.length}`);
     res.json({ id: newPlan.id, message: 'Treatment plan created successfully' });
 });
 
@@ -554,20 +577,30 @@ app.get('/api/treatment-plans', (req, res) => {
 // ADMIN API
 app.get('/api/admin/users', (req, res) => {
     console.log('👥 Fetching admin users...');
-    const mockUsers = [
-        {
-            id: 1,
-            name: 'Admin User',
-            email: 'admin@postureperect.com',
-            role: 'Administrator'
-        }
-    ];
-    res.json(mockUsers);
+    res.json(users);
 });
 
 app.post('/api/admin/users', (req, res) => {
     console.log('👥 Creating admin user...');
-    res.json({ id: 1, message: 'User created successfully' });
+    const { username, email, password, role } = req.body;
+    
+    // Check if user already exists
+    const existingUser = users.find(u => u.email === email);
+    if (existingUser) {
+        return res.status(400).json({ error: 'User with this email already exists' });
+    }
+    
+    const newUser = {
+        id: nextUserId++,
+        name: username,
+        email: email,
+        role: role,
+        created_at: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    console.log('✅ User created successfully:', newUser);
+    res.json({ id: newUser.id, message: 'User created successfully' });
 });
 
 // PATIENT ASSESSMENTS API
