@@ -396,6 +396,46 @@ app.post('/api/treatment-plans', (req, res) => {
     res.json({ id: newPlan.id, message: 'Treatment plan created successfully' });
 });
 
+app.put('/api/treatment-plans/:id', (req, res) => {
+    console.log('📋 Updating treatment plan...');
+    const planId = parseInt(req.params.id);
+    const { name, description, duration_weeks, sessions_per_week, price_per_session } = req.body;
+    
+    const planIndex = treatmentPlans.findIndex(p => p.id === planId);
+    if (planIndex === -1) {
+        return res.status(404).json({ error: 'Treatment plan not found' });
+    }
+    
+    treatmentPlans[planIndex] = {
+        ...treatmentPlans[planIndex],
+        name,
+        description,
+        duration_weeks: parseInt(duration_weeks),
+        sessions_per_week: parseInt(sessions_per_week),
+        price_per_session: parseFloat(price_per_session),
+        sessions: parseInt(duration_weeks) * parseInt(sessions_per_week),
+        price: parseInt(duration_weeks) * parseInt(sessions_per_week) * parseFloat(price_per_session)
+    };
+    
+    console.log('✅ Treatment plan updated:', treatmentPlans[planIndex]);
+    res.json({ message: 'Treatment plan updated successfully' });
+});
+
+app.delete('/api/treatment-plans/:id', (req, res) => {
+    console.log('📋 Deleting treatment plan...');
+    const planId = parseInt(req.params.id);
+    
+    const planIndex = treatmentPlans.findIndex(p => p.id === planId);
+    if (planIndex === -1) {
+        return res.status(404).json({ error: 'Treatment plan not found' });
+    }
+    
+    const deletedPlan = treatmentPlans.splice(planIndex, 1)[0];
+    console.log('✅ Treatment plan deleted:', deletedPlan);
+    console.log(`📋 Total plans now: ${treatmentPlans.length}`);
+    res.json({ message: 'Treatment plan deleted successfully' });
+});
+
 // EMAIL SENDING API
 app.post('/api/send-template-email', (req, res) => {
     console.log('📧 Sending template emails...');

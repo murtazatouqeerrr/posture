@@ -255,13 +255,99 @@ function showAddTemplateModal() {
 
 function editTemplate(templateId) {
     console.log(`✏️ Editing template ${templateId}`);
-    showNotification(`Edit template ${templateId} - Feature coming soon!`, 'info');
+    
+    const template = treatmentPlans.find(t => t.id === templateId);
+    if (!template) {
+        showNotification('Template not found', 'error');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'editTemplateModal';
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50';
+    modal.innerHTML = `
+        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium text-gray-900">Edit Template</h3>
+                    <button onclick="closeEditTemplateModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <form id="editTemplateForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Template Name</label>
+                        <input type="text" name="name" value="${template.name}" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Description</label>
+                        <textarea name="description" rows="3" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">${template.description}</textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Duration (weeks)</label>
+                            <input type="number" name="duration_weeks" value="${template.duration_weeks}" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Sessions per week</label>
+                            <input type="number" name="sessions_per_week" value="${template.sessions_per_week}" min="1" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Price per session ($)</label>
+                        <input type="number" name="price_per_session" value="${template.price_per_session}" step="0.01" min="0" required class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" onclick="closeEditTemplateModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md text-sm font-medium hover:bg-primary-dark">Update Template</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('editTemplateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await updateTemplate(templateId, new FormData(e.target));
+    });
 }
 
 function deleteTemplate(templateId) {
     console.log(`🗑️ Deleting template ${templateId}`);
-    if (confirm('Are you sure you want to delete this template?')) {
-        showNotification(`Delete template ${templateId} - Feature coming soon!`, 'info');
+    
+    const template = treatmentPlans.find(t => t.id === templateId);
+    if (!template) {
+        showNotification('Template not found', 'error');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to delete "${template.name}"? This action cannot be undone.`)) {
+        deleteTemplateFromServer(templateId);
+    }
+}
+
+async function deleteTemplateFromServer(templateId) {
+    try {
+        const response = await fetch(`/api/treatment-plans/${templateId}`, {
+            method: 'DELETE'
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        showNotification('Template deleted successfully', 'success');
+        loadTemplatesView(); // Refresh the templates list
+    } catch (error) {
+        console.error('❌ Error deleting template:', error);
+        showNotification('Error deleting template', 'error');
     }
 }
 
@@ -433,6 +519,38 @@ async function sendTemplateEmails(template, formData) {
         console.error('❌ Error sending emails:', error);
         showNotification('Error sending emails', 'error');
     }
+}
+
+async function updateTemplate(templateId, formData) {
+    try {
+        const data = {
+            name: formData.get('name'),
+            description: formData.get('description'),
+            duration_weeks: formData.get('duration_weeks'),
+            sessions_per_week: formData.get('sessions_per_week'),
+            price_per_session: formData.get('price_per_session')
+        };
+        
+        const response = await fetch(`/api/treatment-plans/${templateId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        
+        showNotification('Template updated successfully', 'success');
+        closeEditTemplateModal();
+        loadTemplatesView(); // Refresh templates list
+    } catch (error) {
+        console.error('❌ Error updating template:', error);
+        showNotification('Error updating template', 'error');
+    }
+}
+
+function closeEditTemplateModal() {
+    const modal = document.getElementById('editTemplateModal');
+    if (modal) modal.remove();
 }
 
 function closeEmailModal() {
