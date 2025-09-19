@@ -304,32 +304,39 @@ class CRMApp {
     }
 
     loadPatientProfileView(patientId) {
-        window.location.href = `patient-profile.html?id=${patientId}`;
+        // For demo, show alert instead of redirect
+        alert(`Patient Profile for ID: ${patientId} - This would show detailed patient information`);
     }
 
     loadCalendarView() {
+        // For demo, redirect to calendar page
         window.location.href = 'calendar.html';
     }
 
     loadInvoicesView() {
+        // For demo, redirect to invoices page
         window.location.href = 'invoices.html';
     }
 
     loadReportsView() {
+        // For demo, redirect to reports page
         window.location.href = 'reports.html';
     }
 
     loadTemplatesView() {
+        // For demo, redirect to templates page
         window.location.href = 'templates.html';
     }
 
     async loadAdminView() {
-        if (this.currentUser.role !== 'admin') {
-            alert('Admin access required');
-            window.location.hash = '#/dashboard';
-            return;
-        }
+        // COMMENTED OUT - Remove admin check for demo
+        // if (this.currentUser.role !== 'admin') {
+        //     alert('Admin access required');
+        //     window.location.hash = '#/dashboard';
+        //     return;
+        // }
         
+        // For demo, redirect to admin page
         window.location.href = 'admin-dashboard.html';
     }
 

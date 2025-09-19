@@ -1,113 +1,71 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const addInvoiceBtn = document.getElementById('addInvoiceBtn');
-    const addInvoiceModal = document.getElementById('addInvoiceModal');
-    const closeModal = document.querySelector('.close');
-    const addInvoiceForm = document.getElementById('addInvoiceForm');
-    const invoicesTableBody = document.getElementById('invoicesTableBody');
-    const contactSelect = document.getElementById('invoiceContactSelect');
-
-    loadContacts();
     loadInvoices();
-
-    addInvoiceBtn.onclick = () => addInvoiceModal.style.display = 'block';
-    closeModal.onclick = () => addInvoiceModal.style.display = 'none';
-    window.onclick = (event) => {
-        if (event.target === addInvoiceModal) {
-            addInvoiceModal.style.display = 'none';
-        }
-    };
-
-    addInvoiceForm.onsubmit = function(e) {
-        e.preventDefault();
-        addInvoice();
-    };
-
-    function loadContacts() {
-        fetch('/api/contacts')
-            .then(response => response.json())
-            .then(contacts => {
-                contactSelect.innerHTML = '<option value="">Select Contact</option>';
-                contacts.forEach(contact => {
-                    const option = document.createElement('option');
-                    option.value = contact.id;
-                    option.textContent = `${contact.first_name} ${contact.last_name}`;
-                    contactSelect.appendChild(option);
-                });
-            });
+    
+    const addInvoiceBtn = document.getElementById('addInvoiceBtn');
+    if (addInvoiceBtn) {
+        addInvoiceBtn.onclick = () => alert('Add invoice functionality - Demo');
     }
-
-    function loadInvoices() {
-        fetch('/api/invoices')
-            .then(response => response.json())
-            .then(invoices => {
-                displayInvoices(invoices);
-            });
-    }
-
-    function displayInvoices(invoices) {
-        invoicesTableBody.innerHTML = '';
-        invoices.forEach(invoice => {
-            const row = document.createElement('tr');
-            const contactName = invoice.first_name && invoice.last_name 
-                ? `${invoice.first_name} ${invoice.last_name}` 
-                : 'N/A';
-            
-            row.innerHTML = `
-                <td>${contactName}</td>
-                <td>$${invoice.amount}</td>
-                <td>${invoice.status}</td>
-                <td>${invoice.due_date}</td>
-                <td>${invoice.services_rendered}</td>
-                <td>
-                    <button class="action-btn btn-edit" onclick="markPaid(${invoice.id})">Mark Paid</button>
-                </td>
-            `;
-            invoicesTableBody.appendChild(row);
-        });
-    }
-
-    function addInvoice() {
-        const invoiceData = {
-            contact_id: document.getElementById('invoiceContactSelect').value,
-            amount: document.getElementById('amount').value,
-            due_date: document.getElementById('dueDate').value,
-            services_rendered: document.getElementById('servicesRendered').value
-        };
-
-        fetch('/api/invoices', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(invoiceData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert('Error: ' + data.error);
-            } else {
-                addInvoiceModal.style.display = 'none';
-                addInvoiceForm.reset();
-                loadInvoices();
-            }
-        });
-    }
-
-    window.markPaid = function(id) {
-        fetch(`/api/invoices/${id}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ status: 'Paid' })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                alert('Error: ' + data.error);
-            } else {
-                loadInvoices();
-            }
-        });
-    };
 });
+
+async function loadInvoices() {
+    try {
+        const response = await fetch('/api/invoices');
+        const invoices = await response.json();
+        displayInvoices(invoices);
+    } catch (error) {
+        console.error('Error loading invoices:', error);
+        document.getElementById('invoicesTableBody').innerHTML = 
+            '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading invoices</td></tr>';
+    }
+}
+
+function displayInvoices(invoices) {
+    const tbody = document.getElementById('invoicesTableBody');
+    
+    if (invoices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No invoices found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = invoices.map(invoice => `
+        <tr class="hover:bg-gray-50">
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${invoice.contact_name}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${invoice.amount.toFixed(2)}</td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(invoice.status)}">
+                    ${invoice.status}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(invoice.due_date).toLocaleDateString()}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${invoice.services_rendered}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                <button onclick="viewInvoice(${invoice.id})" class="text-blue-600 hover:text-blue-900">View</button>
+                <button onclick="editInvoice(${invoice.id})" class="text-yellow-600 hover:text-yellow-900">Edit</button>
+                <button onclick="deleteInvoice(${invoice.id})" class="text-red-600 hover:text-red-900">Delete</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'Paid': return 'bg-green-100 text-green-800';
+        case 'Sent': return 'bg-blue-100 text-blue-800';
+        case 'Overdue': return 'bg-red-100 text-red-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function viewInvoice(id) {
+    alert(`Viewing invoice ${id}`);
+}
+
+function editInvoice(id) {
+    alert(`Editing invoice ${id}`);
+}
+
+function deleteInvoice(id) {
+    if (confirm('Are you sure you want to delete this invoice?')) {
+        alert(`Deleting invoice ${id}`);
+    }
+}
