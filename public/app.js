@@ -82,14 +82,6 @@ class CRMApp {
         document.getElementById('pageTitle').textContent = title;
     }
 
-    showLoading() {
-        document.getElementById('loadingOverlay').style.display = 'flex';
-    }
-
-    hideLoading() {
-        document.getElementById('loadingOverlay').style.display = 'none';
-    }
-
     handleRoute() {
         const hash = window.location.hash || '#/dashboard';
         const [route, param] = hash.substring(2).split('/');
@@ -146,7 +138,7 @@ class CRMApp {
                         </svg>
                         <div>
                             <p class="text-sm text-gray-600">Total Patients</p>
-                            <p class="text-2xl font-bold text-gray-900">3</p>
+                            <p class="text-2xl font-bold text-gray-900" id="totalPatientsCount">-</p>
                         </div>
                     </div>
                 </div>
@@ -158,7 +150,7 @@ class CRMApp {
                         </svg>
                         <div>
                             <p class="text-sm text-gray-600">Appointments</p>
-                            <p class="text-2xl font-bold text-gray-900">3</p>
+                            <p class="text-2xl font-bold text-gray-900" id="totalAppointmentsCount">-</p>
                         </div>
                     </div>
                 </div>
@@ -170,7 +162,7 @@ class CRMApp {
                         </svg>
                         <div>
                             <p class="text-sm text-gray-600">Invoices</p>
-                            <p class="text-2xl font-bold text-gray-900">2</p>
+                            <p class="text-2xl font-bold text-gray-900" id="totalInvoicesCount">-</p>
                         </div>
                     </div>
                 </div>
@@ -182,7 +174,7 @@ class CRMApp {
                         </svg>
                         <div>
                             <p class="text-sm text-gray-600">Revenue</p>
-                            <p class="text-2xl font-bold text-gray-900">$2,450</p>
+                            <p class="text-2xl font-bold text-gray-900" id="totalRevenueCount">-</p>
                         </div>
                     </div>
                 </div>
@@ -220,35 +212,180 @@ class CRMApp {
                 </div>
             </div>
         </div>
+
+        <!-- Add Contact Modal -->
+        <div id="addContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Add New Patient</h3>
+                        <button class="close text-gray-400 hover:text-gray-600">×</button>
+                    </div>
+                    
+                    <form id="addContactForm" class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">First Name</label>
+                                <input type="text" id="firstName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                                <input type="text" id="lastName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" id="email" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Phone</label>
+                            <input type="tel" id="phone" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
+                            <textarea id="primaryComplaint" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <select id="status" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                                <option value="Lead">Lead</option>
+                                <option value="Client">Client</option>
+                                <option value="Past Client">Past Client</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" class="close px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Cancel</button>
+                            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-teal-700 rounded-md">Add Patient</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Contact Modal -->
+        <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Edit Patient</h3>
+                        <button class="close-edit text-gray-400 hover:text-gray-600">×</button>
+                    </div>
+                    
+                    <form id="editContactForm" class="space-y-4">
+                        <input type="hidden" id="editContactId">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">First Name</label>
+                                <input type="text" id="editFirstName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">Last Name</label>
+                                <input type="text" id="editLastName" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Email</label>
+                            <input type="email" id="editEmail" required class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Phone</label>
+                            <input type="tel" id="editPhone" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
+                            <textarea id="editPrimaryComplaint" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <select id="editStatus" class="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2">
+                                <option value="Lead">Lead</option>
+                                <option value="Client">Client</option>
+                                <option value="Past Client">Past Client</option>
+                            </select>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" class="close-edit px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Cancel</button>
+                            <button type="submit" class="px-4 py-2 text-sm font-medium text-white bg-primary hover:bg-teal-700 rounded-md">Update Patient</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
         `;
         
         document.getElementById('app').innerHTML = html;
         this.setupDashboardEvents();
         this.loadContacts();
+        this.loadDashboardStats();
     }
 
     setupDashboardEvents() {
         const addContactBtn = document.getElementById('addContactBtn');
-        if (addContactBtn) {
-            addContactBtn.onclick = () => alert('Add patient functionality will be implemented');
+        const addContactModal = document.getElementById('addContactModal');
+        const editContactModal = document.getElementById('editContactModal');
+        const closeModal = document.querySelector('.close');
+        const closeEditModal = document.querySelector('.close-edit');
+
+        addContactBtn.onclick = () => addContactModal.style.display = 'block';
+        closeModal.onclick = () => addContactModal.style.display = 'none';
+        closeEditModal.onclick = () => editContactModal.style.display = 'none';
+
+        document.getElementById('addContactForm').onsubmit = (e) => {
+            e.preventDefault();
+            this.addContact();
+        };
+
+        document.getElementById('editContactForm').onsubmit = (e) => {
+            e.preventDefault();
+            this.updateContact();
+        };
+
+        window.onclick = (event) => {
+            if (event.target === addContactModal) addContactModal.style.display = 'none';
+            if (event.target === editContactModal) editContactModal.style.display = 'none';
+        };
+    }
+
+    async loadDashboardStats() {
+        try {
+            const response = await fetch('/api/admin/analytics/overview');
+            const data = await response.json();
+            document.getElementById('totalPatientsCount').textContent = data.total_patients;
+            document.getElementById('totalAppointmentsCount').textContent = data.total_appointments;
+            document.getElementById('totalInvoicesCount').textContent = data.total_appointments;
+            document.getElementById('totalRevenueCount').textContent = '$' + (data.total_revenue || 0);
+        } catch (error) {
+            console.error('Error loading stats:', error);
         }
     }
 
     async loadContacts() {
-        const contacts = [
-            { id: 1, first_name: 'John', last_name: 'Smith', email: 'john@email.com', phone: '555-0101', status: 'Client', primary_complaint: 'Lower back pain' },
-            { id: 2, first_name: 'Sarah', last_name: 'Wilson', email: 'sarah@email.com', phone: '555-0102', status: 'Lead', primary_complaint: 'Neck pain' },
-            { id: 3, first_name: 'Mike', last_name: 'Brown', email: 'mike@email.com', phone: '555-0103', status: 'Client', primary_complaint: 'Shoulder pain' }
-        ];
-        
-        this.displayContacts(contacts);
+        try {
+            const response = await fetch('/api/contacts');
+            const contacts = await response.json();
+            this.displayContacts(contacts);
+        } catch (error) {
+            console.error('Error loading contacts:', error);
+            document.getElementById('contactsTableBody').innerHTML = 
+                '<tr><td colspan="6" class="px-6 py-4 text-center text-red-500">Error loading contacts</td></tr>';
+        }
     }
 
     displayContacts(contacts) {
         const tbody = document.getElementById('contactsTableBody');
         
         if (contacts.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No contacts found.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-gray-500">No contacts found.</td></tr>';
             return;
         }
         
@@ -280,6 +417,122 @@ class CRMApp {
         `).join('');
     }
 
+    async addContact() {
+        const contactData = {
+            first_name: document.getElementById('firstName').value.trim(),
+            last_name: document.getElementById('lastName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            primary_complaint: document.getElementById('primaryComplaint').value.trim(),
+            status: document.getElementById('status').value
+        };
+
+        try {
+            const response = await fetch('/api/contacts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contactData)
+            });
+
+            if (response.ok) {
+                document.getElementById('addContactModal').style.display = 'none';
+                document.getElementById('addContactForm').reset();
+                alert('Patient added successfully!');
+                this.loadContacts();
+                this.loadDashboardStats();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + error.error);
+            }
+        } catch (error) {
+            console.error('Error adding contact:', error);
+            alert('Failed to add patient');
+        }
+    }
+
+    async viewContact(id) {
+        try {
+            const response = await fetch(`/api/contacts/${id}`);
+            const contact = await response.json();
+            alert(`Patient Details:\nName: ${contact.first_name} ${contact.last_name}\nEmail: ${contact.email}\nPhone: ${contact.phone}\nStatus: ${contact.status}\nComplaint: ${contact.primary_complaint}`);
+        } catch (error) {
+            alert('Error loading patient details');
+        }
+    }
+
+    async editContact(id) {
+        try {
+            const response = await fetch(`/api/contacts/${id}`);
+            const contact = await response.json();
+            
+            document.getElementById('editContactId').value = contact.id;
+            document.getElementById('editFirstName').value = contact.first_name;
+            document.getElementById('editLastName').value = contact.last_name;
+            document.getElementById('editEmail').value = contact.email;
+            document.getElementById('editPhone').value = contact.phone || '';
+            document.getElementById('editPrimaryComplaint').value = contact.primary_complaint || '';
+            document.getElementById('editStatus').value = contact.status;
+            
+            document.getElementById('editContactModal').style.display = 'block';
+        } catch (error) {
+            alert('Error loading patient for editing');
+        }
+    }
+
+    async updateContact() {
+        const contactId = document.getElementById('editContactId').value;
+        const contactData = {
+            first_name: document.getElementById('editFirstName').value.trim(),
+            last_name: document.getElementById('editLastName').value.trim(),
+            email: document.getElementById('editEmail').value.trim(),
+            phone: document.getElementById('editPhone').value.trim(),
+            primary_complaint: document.getElementById('editPrimaryComplaint').value.trim(),
+            status: document.getElementById('editStatus').value
+        };
+
+        try {
+            const response = await fetch(`/api/contacts/${contactId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(contactData)
+            });
+
+            if (response.ok) {
+                document.getElementById('editContactModal').style.display = 'none';
+                alert('Patient updated successfully!');
+                this.loadContacts();
+            } else {
+                const error = await response.json();
+                alert('Error: ' + error.error);
+            }
+        } catch (error) {
+            console.error('Error updating contact:', error);
+            alert('Failed to update patient');
+        }
+    }
+
+    async deleteContact(id) {
+        if (confirm('Are you sure you want to delete this patient?')) {
+            try {
+                const response = await fetch(`/api/contacts/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Patient deleted successfully!');
+                    this.loadContacts();
+                    this.loadDashboardStats();
+                } else {
+                    const error = await response.json();
+                    alert('Error: ' + error.error);
+                }
+            } catch (error) {
+                console.error('Error deleting contact:', error);
+                alert('Failed to delete patient');
+            }
+        }
+    }
+
     getStatusColor(status) {
         switch(status) {
             case 'Client': return 'bg-green-100 text-green-800';
@@ -289,54 +542,27 @@ class CRMApp {
         }
     }
 
-    viewContact(id) {
-        alert(`Viewing contact ${id}`);
-    }
-
-    editContact(id) {
-        alert(`Editing contact ${id}`);
-    }
-
-    deleteContact(id) {
-        if (confirm('Are you sure you want to delete this contact?')) {
-            alert(`Deleting contact ${id}`);
-        }
-    }
-
     loadPatientProfileView(patientId) {
-        // For demo, show alert instead of redirect
-        alert(`Patient Profile for ID: ${patientId} - This would show detailed patient information`);
+        window.location.href = `patient-profile.html?id=${patientId}`;
     }
 
     loadCalendarView() {
-        // For demo, redirect to calendar page
         window.location.href = 'calendar.html';
     }
 
     loadInvoicesView() {
-        // For demo, redirect to invoices page
         window.location.href = 'invoices.html';
     }
 
     loadReportsView() {
-        // For demo, redirect to reports page
         window.location.href = 'reports.html';
     }
 
     loadTemplatesView() {
-        // For demo, redirect to templates page
         window.location.href = 'templates.html';
     }
 
     async loadAdminView() {
-        // COMMENTED OUT - Remove admin check for demo
-        // if (this.currentUser.role !== 'admin') {
-        //     alert('Admin access required');
-        //     window.location.hash = '#/dashboard';
-        //     return;
-        // }
-        
-        // For demo, redirect to admin page
         window.location.href = 'admin-dashboard.html';
     }
 
