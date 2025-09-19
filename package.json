@@ -5,11 +5,14 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "start:windows": "node server-windows.js",
     "dev": "nodemon server.js",
+    "dev:windows": "nodemon server-windows.js",
     "build": "echo 'Build complete'",
     "test": "echo \"Error: no test specified\" && exit 1",
     "deploy": "npm run build && npm start",
-    "db:init": "node -e \"require('./server.js')\""
+    "db:init": "node -e \"require('./server.js')\"",
+    "fix:windows": "npm cache clean --force && npm install && npm rebuild better-sqlite3"
   },
   "keywords": [
     "crm",
@@ -23,13 +26,18 @@
   "author": "Posture Perfect",
   "license": "MIT",
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.21.2",
     "express-session": "^1.17.3",
-    "sqlite3": "^5.1.6",
-    "stripe": "^14.9.0"
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.6",
+    "sqlite3": "^5.1.7",
+    "stripe": "^14.9.0",
+    "twilio": "^5.10.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

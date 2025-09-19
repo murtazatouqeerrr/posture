@@ -1,0 +1,38 @@
+api/contacts:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+app.js:69 ❌ Error loading dashboard: Error: HTTP 500
+    at loadDashboardView (app.js:89:29)
+    at async loadView (app.js:45:17)
+loadView @ app.js:69Understand this error
+api/subscriptions:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/subscription-plans:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/contacts:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+subscriptions.js:27 ❌ Subscriptions loading error: Error: Failed to fetch subscription data
+    at loadSubscriptionsView (subscriptions.js:17:19)
+    at async loadView (app.js:51:17)
+loadSubscriptionsView @ subscriptions.js:27Understand this error
+api/invoices:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/contacts:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+invoices.js:29 ❌ Invoices loading error: Error: Failed to fetch invoices: 500
+    at loadInvoicesView (invoices.js:16:19)
+    at async loadView (app.js:54:17)
+loadInvoicesView @ invoices.js:29Understand this error
+api/reports/leads-per-month:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/reports/conversion-rate:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/reports/revenue-per-month:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/admin/analytics/financial:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+reports.js:33 ❌ Reports loading error: Error: Failed to fetch report data
+    at loadReportsView (reports.js:22:19)
+    at async loadView (app.js:57:17)
+loadReportsView @ reports.js:33Understand this error
+api/treatment-plans:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+templates.js:18 ❌ Templates loading error: Error: Failed to fetch treatment plans: 500
+    at loadTemplatesView (templates.js:10:19)
+    at async loadView (app.js:60:17)
+loadTemplatesView @ templates.js:18Understand this error
+api/admin/users:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/admin/analytics/financial:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/contacts:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+api/invoices:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)Understand this error
+admin-dashboard.js:78 ❌ Admin loading error: Error: Failed to fetch users: 500
+    at loadAdminView (admin-dashboard.js:63:19)
+    at async loadView (app.js:63:17)

@@ -62,6 +62,9 @@ async function loadView(viewName) {
             case 'admin':
                 await loadAdminView();
                 break;
+            case 'campaigns':
+                await loadCampaignsView();
+                break;
             default:
                 await loadDashboardView();
         }
@@ -218,6 +221,18 @@ async function loadDashboardView() {
             </div>
         </div>
     `;
+}
+
+async function loadAdminView() {
+    console.log('🛠️ Loading admin view...');
+    document.getElementById('app').innerHTML = await fetch('admin-dashboard.html').then(res => res.text());
+    initializeAdminDashboard();
+}
+
+async function loadCampaignsView() {
+    console.log('🚀 Loading campaigns view...');
+    document.getElementById('app').innerHTML = await fetch('campaigns.html').then(res => res.text());
+    initializeCampaigns();
 }
 
 // Initialize on page load

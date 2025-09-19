@@ -1,14 +1,92 @@
-Financial & Business Intelligence Modules
-Purpose: Track the financial health of the business and understand what's working.
+Act as a full-stack developer. We are now adding a suite of advanced automation modules to the Posture Perfect CRM, specifically focused on pre-visit efficiency, package management, and patient retention. These are critical for our client's workflow.
 
-What to Add:
+We will build these modules in sequence. For each, provide the database changes, backend logic, and frontend UI integration.
 
-Simple Invoicing & Payments:
+Module 1: Pre-Vit Task Automation & CC on File
 
-Command to QChat: "Generate a table invoices linked to the contacts table. It should have columns for amount, status ('Sent', 'Paid', 'Overdue'), due_date, and services_rendered. Create a basic HTML invoice template and an endpoint to generate a PDF for each invoice."
+Purpose: Streamline onboarding before the first visit.
 
-Reporting Dashboard:
+Actions:
 
-Command to QChat: "Create a new dashboard page that shows key metrics. Write API endpoints that return JSON data for: 1) Total number of leads per month (chart), 2) Lead conversion rate (%), 3) Revenue per month. Then generate chart.js code to visually display this data on the dashboard."
+Database: Add a pre_visit_status JSON field to the patients table or a new onboarding_tasks table to track completion of: intake_forms_sent, intake_forms_completed, cc_on_file.
 
-Treatment Plan Templates: Standardize the offers. Create templates for "6-Week Posture Correction Plan" or "1-on-1 Online Coaching Package" that can be quickly sent to leads after their assessment.
+Logic: Upon converting a lead to a patient (status -> 'Client'), automatically:
+
+a) Send an email with a link to digital intake forms.
+
+b) Create a task for the admin to call and get a credit card on file.
+
+c) Automatically schedule the first follow-up appointment.
+
+UI: Add a "Pre-Visit Checklist" section to the patient profile showing task status.
+
+Module 2: Package System & Tracking
+
+Purpose: Sell and track session packages (e.g., "6-Session Package").
+
+Actions:
+
+Database:
+
+Create a packages table: id, name, number_of_sessions, price.
+
+Create a patient_packages table: id, patient_id, package_id, purchase_date, sessions_remaining, is_active.
+
+Link the appointments table to patient_packages with a patient_package_id FK.
+
+Logic: When a session is logged, automatically decrement sessions_remaining. Prevent booking if no sessions are left.
+
+UI: A "Packages" tab in the patient profile showing purchase history and current balance.
+
+Module 3: Automated Nudge System (Core Automation)
+
+Purpose: Automate patient communication based on package status.
+
+Actions:
+
+A. Low Sessions Warning:
+
+Trigger: sessions_remaining < 3.
+
+Action: Automatically send an email/SMS nudge: "Heads up! You only have X sessions left. Click here to renew and secure your spot."
+
+B. Package Complete & Renewal:
+
+Trigger: sessions_remaining == 0.
+
+Action: Automatically send an email with a link to purchase a new package.
+
+C. Dormant Patient Re-activation:
+
+Trigger: No appointment booked for 45 days after their package ends or last session.
+
+Action: Add to a "Dormant" segment and start a specific email sequence checking in and offering a incentive to return.
+
+Implementation: This requires a background worker. Create a Node.js script that runs daily (via a cron job) to check these conditions and trigger the appropriate automated actions via SendGrid/Twilio APIs.
+
+Module 4: Survey & Review Gating
+
+Purpose: Automatically request reviews from happy patients, not those who dropped out.
+
+Actions:
+
+Logic: The trigger for a review request should be: sessions_remaining == 0 AND the patient's status is still 'Active' (not 'Dormant').
+
+Action: Automatically send a feedback survey or a request to review on Google/Yelp. This ensures you only ask patients who have successfully completed a package.
+
+Database: Add a feedback_status to track if a request was sent and if they responded.
+
+Technical Requirements:
+For each module, provide:
+
+The precise SQL schema changes.
+
+The new API endpoints needed (e.g., POST /api/patient/:id/purchase-package).
+
+The backend logic for the automation triggers.
+
+The frontend UI components (e.g., the package purchase form, the pre-visit checklist) styled with Tailwind CSS.
+
+The code for the daily cron job that powers the nudge system.
+
+Let's start with Module 1: Pre-Visit Task Automation. First, provide the optimal database design for tracking these tasks and the logic flow for the automation."

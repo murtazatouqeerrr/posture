@@ -528,14 +528,113 @@ function showAddUserModal() {
 
 function editUser(userId) {
     console.log(`✏️ Editing user ${userId}`);
-    showNotification(`Edit user ${userId} - Feature coming soon!`, 'info');
+    
+    const user = adminData.users.find(u => u.id === userId);
+    if (!user) {
+        showNotification('User not found', 'error');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Edit User</h3>
+            <form id="editUserForm">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <input type="text" id="editUserName" value="${user.name || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                    <input type="text" id="editUsername" value="${user.username || ''}" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select id="editUserRole" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                        <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                        <option value="therapist" ${user.role === 'therapist' ? 'selected' : ''}>Therapist</option>
+                        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" id="cancelEditUser" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Update User</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('cancelEditUser').addEventListener('click', () => modal.remove());
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = {
+            name: document.getElementById('editUserName').value,
+            username: document.getElementById('editUsername').value,
+            role: document.getElementById('editUserRole').value
+        };
+        
+        try {
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+            
+            if (!response.ok) throw new Error('Failed to update user');
+            
+            showNotification('User updated successfully!', 'success');
+            modal.remove();
+            loadAdminView(); // Refresh the view
+        } catch (error) {
+            showNotification('Failed to update user', 'error');
+        }
+    });
 }
 
 function deleteUser(userId) {
     console.log(`🗑️ Deleting user ${userId}`);
-    if (confirm('Are you sure you want to delete this user?')) {
-        showNotification(`Delete user ${userId} - Feature coming soon!`, 'info');
+    
+    const user = adminData.users.find(u => u.id === userId);
+    if (!user) {
+        showNotification('User not found', 'error');
+        return;
     }
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Delete User</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete user "${user.name || user.username}"? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelDelete" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
+                <button id="confirmDelete" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete User</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    document.getElementById('cancelDelete').addEventListener('click', () => modal.remove());
+    document.getElementById('confirmDelete').addEventListener('click', async () => {
+        try {
+            const response = await fetch(`/api/admin/users/${userId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) throw new Error('Failed to delete user');
+            
+            showNotification('User deleted successfully!', 'success');
+            modal.remove();
+            loadAdminView(); // Refresh the view
+        } catch (error) {
+            showNotification('Failed to delete user', 'error');
+        }
+    });
 }
 
 function refreshAnalytics() {

@@ -176,6 +176,9 @@
                                     <button onclick="switchTab('timeline')" class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
                                         Timeline
                                     </button>
+                                    <button onclick="switchTab('referrals')" class="tab-btn py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">
+                                        Referrals
+                                    </button>
                                 </nav>
                             </div>
                             <div id="tabContent" class="p-6">
@@ -229,6 +232,9 @@
                     break;
                 case 'timeline':
                     loadTimelineTab();
+                    break;
+                case 'referrals':
+                    loadReferralsTab();
                     break;
             }
         }
@@ -410,6 +416,61 @@
                     `).join('') : '<p class="text-gray-500">No timeline events found</p>';
             } catch (error) {
                 document.getElementById('timelineContent').innerHTML = '<p class="text-red-500">Error loading timeline</p>';
+            }
+        }
+
+        async function loadReferralsTab() {
+            document.getElementById('tabContent').innerHTML = `
+                <div class="space-y-6">
+                    <h3 class="text-lg font-medium text-gray-900">Referred Contacts</h3>
+                    <div id="referralsContent">Loading referrals...</div>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`/api/contacts/${patientId}/referrals`);
+                const referrals = await response.json();
+
+                document.getElementById('referralsContent').innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${referrals.length > 0 ? referrals.map(referral => `
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900">${referral.first_name} ${referral.last_name}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-900">${referral.email}</div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(referral.status)}">
+                                                ${referral.status}
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            ${formatDate(referral.created_at)}
+                                        </td>
+                                    </tr>
+                                `).join('') : `
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">No referrals found</td>
+                                    </tr>
+                                `}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('referralsContent').innerHTML = '<p class="text-red-500">Error loading referrals</p>';
             }
         }
 

@@ -172,7 +172,21 @@ INSERT OR IGNORE INTO contacts (first_name, last_name, email, phone, primary_com
 ('Sarah', 'Wilson', 'sarah@email.com', '555-0102', 'Neck pain', 'Lead'),
 ('Mike', 'Brown', 'mike@email.com', '555-0103', 'Shoulder pain', 'Client');
 
+-- Patient Logins table
+CREATE TABLE IF NOT EXISTS patient_logins (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contact_id INTEGER NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (contact_id) REFERENCES contacts(id)
+);
+
 INSERT OR IGNORE INTO treatment_plans (name, description, duration_weeks, sessions_per_week, price_per_session) VALUES 
 ('Basic Physical Therapy', 'Standard rehabilitation program', 6, 2, 120.00),
 ('Advanced Recovery', 'Intensive therapy for complex cases', 8, 3, 150.00),
 ('Maintenance Program', 'Ongoing support and prevention', 4, 1, 80.00);
+
+-- Add sample patient login
+INSERT OR IGNORE INTO patient_logins (contact_id, email, password_hash) VALUES 
+(100, 'emily.johnson@email.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
