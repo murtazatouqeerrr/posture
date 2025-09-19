@@ -1,174 +1,245 @@
-document.addEventListener('DOMContentLoaded', function() {
-    loadAppointments();
-    setupEventHandlers();
-});
-
-function setupEventHandlers() {
-    const addAppointmentBtn = document.getElementById('addAppointmentBtn');
-    const addAppointmentModal = document.getElementById('addAppointmentModal');
-    const closeModal = document.querySelector('.close');
-    const addAppointmentForm = document.getElementById('addAppointmentForm');
-
-    if (addAppointmentBtn) {
-        addAppointmentBtn.onclick = () => addAppointmentModal.style.display = 'block';
-    }
-    
-    if (closeModal) {
-        closeModal.onclick = () => addAppointmentModal.style.display = 'none';
+class CalendarManager {
+    constructor() {
+        this.appointments = [];
+        this.contacts = [];
+        this.currentDate = new Date();
+        this.init();
     }
 
-    if (addAppointmentForm) {
-        addAppointmentForm.onsubmit = function(e) {
+    async init() {
+        await this.loadContacts();
+        await this.loadAppointments();
+        this.renderCalendar();
+        this.setupEventListeners();
+    }
+
+    async loadContacts() {
+        try {
+            const response = await fetch('/api/contacts');
+            this.contacts = await response.json();
+        } catch (error) {
+            console.error('Error loading contacts:', error);
+        }
+    }
+
+    async loadAppointments() {
+        try {
+            const response = await fetch('/api/appointments');
+            this.appointments = await response.json();
+        } catch (error) {
+            console.error('Error loading appointments:', error);
+        }
+    }
+
+    setupEventListeners() {
+        document.getElementById('addAppointmentBtn').onclick = () => this.showAddModal();
+        document.getElementById('prevMonth').onclick = () => this.changeMonth(-1);
+        document.getElementById('nextMonth').onclick = () => this.changeMonth(1);
+        
+        document.querySelector('.close-appointment').onclick = () => this.hideModal();
+        document.querySelector('.close-edit-appointment').onclick = () => this.hideEditModal();
+        
+        document.getElementById('appointmentForm').onsubmit = (e) => {
             e.preventDefault();
-            addAppointment();
+            this.addAppointment();
+        };
+        
+        document.getElementById('editAppointmentForm').onsubmit = (e) => {
+            e.preventDefault();
+            this.updateAppointment();
         };
     }
 
-    window.onclick = (event) => {
-        if (event.target === addAppointmentModal) {
-            addAppointmentModal.style.display = 'none';
+    showAddModal() {
+        const modal = document.getElementById('appointmentModal');
+        const contactSelect = document.getElementById('contactId');
+        
+        contactSelect.innerHTML = '<option value="">Select Patient</option>' +
+            this.contacts.map(c => `<option value="${c.id}">${c.first_name} ${c.last_name}</option>`).join('');
+        
+        modal.style.display = 'block';
+    }
+
+    hideModal() {
+        document.getElementById('appointmentModal').style.display = 'none';
+        document.getElementById('appointmentForm').reset();
+    }
+
+    hideEditModal() {
+        document.getElementById('editAppointmentModal').style.display = 'none';
+    }
+
+    async addAppointment() {
+        const formData = new FormData(document.getElementById('appointmentForm'));
+        const appointmentData = {
+            contact_id: formData.get('contactId'),
+            appointment_date: formData.get('appointmentDate'),
+            appointment_time: formData.get('appointmentTime'),
+            service_type: formData.get('serviceType'),
+            notes: formData.get('notes'),
+            status: 'Scheduled'
+        };
+
+        try {
+            const response = await fetch('/api/appointments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(appointmentData)
+            });
+
+            if (response.ok) {
+                this.hideModal();
+                await this.loadAppointments();
+                this.renderCalendar();
+                this.showSuccessMessage('Appointment added successfully!');
+            } else {
+                const error = await response.json();
+                this.showErrorMessage('Error: ' + error.error);
+            }
+        } catch (error) {
+            this.showErrorMessage('Failed to add appointment');
         }
-    };
-}
-
-async function loadAppointments() {
-    try {
-        const response = await fetch('/api/appointments');
-        const appointments = await response.json();
-        displayAppointments(appointments);
-    } catch (error) {
-        console.error('Error loading appointments:', error);
-        document.getElementById('appointmentsTableBody').innerHTML = 
-            '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error loading appointments</td></tr>';
     }
-}
 
-function displayAppointments(appointments) {
-    const tbody = document.getElementById('appointmentsTableBody');
-    
-    if (appointments.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No appointments found.</td></tr>';
-        return;
-    }
-    
-    tbody.innerHTML = appointments.map(appointment => `
-        <tr class="hover:bg-gray-50">
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${appointment.patient_name}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(appointment.date_time).toLocaleString()}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${appointment.type}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(appointment.status)}">
-                    ${appointment.status}
-                </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                <button onclick="viewAppointment(${appointment.id})" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700">View</button>
-                <button onclick="editAppointment(${appointment.id})" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-yellow-600 hover:bg-yellow-700">Edit</button>
-                <button onclick="deleteAppointment(${appointment.id})" class="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded text-white bg-red-600 hover:bg-red-700">Delete</button>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function getStatusColor(status) {
-    switch(status) {
-        case 'Completed': return 'bg-green-100 text-green-800';
-        case 'Scheduled': return 'bg-blue-100 text-blue-800';
-        case 'Cancelled': return 'bg-red-100 text-red-800';
-        default: return 'bg-gray-100 text-gray-800';
-    }
-}
-
-async function addAppointment() {
-    const appointmentData = {
-        contact_id: document.getElementById('appointmentContact').value,
-        date_time: document.getElementById('appointmentDateTime').value,
-        type: document.getElementById('appointmentType').value,
-        notes: document.getElementById('appointmentNotes').value
-    };
-
-    try {
-        const response = await fetch('/api/appointments', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(appointmentData)
-        });
-
-        if (response.ok) {
-            document.getElementById('addAppointmentModal').style.display = 'none';
-            document.getElementById('addAppointmentForm').reset();
-            loadAppointments();
-        } else {
-            const error = await response.json();
-            alert('Error: ' + error.error);
+    async editAppointment(id) {
+        try {
+            const response = await fetch(`/api/appointments/${id}`);
+            const appointment = await response.json();
+            
+            document.getElementById('editAppointmentId').value = appointment.id;
+            document.getElementById('editContactId').innerHTML = 
+                this.contacts.map(c => `<option value="${c.id}" ${c.id == appointment.contact_id ? 'selected' : ''}>${c.first_name} ${c.last_name}</option>`).join('');
+            document.getElementById('editAppointmentDate').value = appointment.appointment_date;
+            document.getElementById('editAppointmentTime').value = appointment.appointment_time;
+            document.getElementById('editServiceType').value = appointment.service_type;
+            document.getElementById('editNotes').value = appointment.notes || '';
+            document.getElementById('editStatus').value = appointment.status;
+            
+            document.getElementById('editAppointmentModal').style.display = 'block';
+        } catch (error) {
+            this.showErrorMessage('Error loading appointment');
         }
-    } catch (error) {
-        console.error('Error adding appointment:', error);
-        alert('Failed to add appointment');
+    }
+
+    async updateAppointment() {
+        const appointmentId = document.getElementById('editAppointmentId').value;
+        const formData = new FormData(document.getElementById('editAppointmentForm'));
+        const appointmentData = {
+            contact_id: formData.get('contactId'),
+            appointment_date: formData.get('appointmentDate'),
+            appointment_time: formData.get('appointmentTime'),
+            service_type: formData.get('serviceType'),
+            notes: formData.get('notes'),
+            status: formData.get('status')
+        };
+
+        try {
+            const response = await fetch(`/api/appointments/${appointmentId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(appointmentData)
+            });
+
+            if (response.ok) {
+                this.hideEditModal();
+                await this.loadAppointments();
+                this.renderCalendar();
+                this.showSuccessMessage('Appointment updated successfully!');
+            } else {
+                const error = await response.json();
+                this.showErrorMessage('Error: ' + error.error);
+            }
+        } catch (error) {
+            this.showErrorMessage('Failed to update appointment');
+        }
+    }
+
+    async deleteAppointment(id) {
+        if (confirm('Are you sure you want to delete this appointment?')) {
+            try {
+                const response = await fetch(`/api/appointments/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    await this.loadAppointments();
+                    this.renderCalendar();
+                    this.showSuccessMessage('Appointment deleted successfully!');
+                } else {
+                    const error = await response.json();
+                    this.showErrorMessage('Error: ' + error.error);
+                }
+            } catch (error) {
+                this.showErrorMessage('Failed to delete appointment');
+            }
+        }
+    }
+
+    changeMonth(direction) {
+        this.currentDate.setMonth(this.currentDate.getMonth() + direction);
+        this.renderCalendar();
+    }
+
+    renderCalendar() {
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"];
+        
+        document.getElementById('currentMonth').textContent = 
+            `${monthNames[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+
+        const firstDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth(), 1);
+        const lastDay = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + 1, 0);
+        const startDate = new Date(firstDay);
+        startDate.setDate(startDate.getDate() - firstDay.getDay());
+
+        const calendarGrid = document.getElementById('calendarGrid');
+        calendarGrid.innerHTML = '';
+
+        for (let i = 0; i < 42; i++) {
+            const cellDate = new Date(startDate);
+            cellDate.setDate(startDate.getDate() + i);
+            
+            const dayAppointments = this.appointments.filter(apt => 
+                apt.appointment_date === cellDate.toISOString().split('T')[0]
+            );
+
+            const cell = document.createElement('div');
+            cell.className = `min-h-24 p-2 border border-gray-200 ${
+                cellDate.getMonth() !== this.currentDate.getMonth() ? 'bg-gray-50 text-gray-400' : 'bg-white'
+            }`;
+            
+            cell.innerHTML = `
+                <div class="font-medium text-sm">${cellDate.getDate()}</div>
+                ${dayAppointments.map(apt => {
+                    const contact = this.contacts.find(c => c.id == apt.contact_id);
+                    return `
+                        <div class="mt-1 p-1 text-xs bg-blue-100 text-blue-800 rounded cursor-pointer hover:bg-blue-200"
+                             onclick="calendar.editAppointment(${apt.id})">
+                            ${apt.appointment_time} - ${contact ? contact.first_name + ' ' + contact.last_name : 'Unknown'}
+                        </div>
+                    `;
+                }).join('')}
+            `;
+            
+            calendarGrid.appendChild(cell);
+        }
+    }
+
+    showSuccessMessage(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    showErrorMessage(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
     }
 }
 
-function viewAppointment(id) {
-    // Show appointment details in modal
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h3 class="text-lg font-medium mb-4">Appointment Details</h3>
-            <p><strong>ID:</strong> ${id}</p>
-            <p><strong>Status:</strong> Scheduled</p>
-            <p><strong>Type:</strong> Initial Assessment</p>
-            <button onclick="this.closest('.fixed').remove()" class="mt-4 bg-gray-500 text-white px-4 py-2 rounded">Close</button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-function editAppointment(id) {
-    // Show edit appointment modal
-    const modal = document.createElement('div');
-    modal.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50';
-    modal.innerHTML = `
-        <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-            <h3 class="text-lg font-medium mb-4">Edit Appointment</h3>
-            <form onsubmit="updateAppointment(event, ${id})">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Type</label>
-                    <select class="mt-1 block w-full border-gray-300 rounded-md">
-                        <option>Initial Assessment</option>
-                        <option>Follow-up</option>
-                        <option>Treatment</option>
-                    </select>
-                </div>
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700">Status</label>
-                    <select class="mt-1 block w-full border-gray-300 rounded-md">
-                        <option>Scheduled</option>
-                        <option>Completed</option>
-                        <option>Cancelled</option>
-                    </select>
-                </div>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="this.closest('.fixed').remove()" class="bg-gray-500 text-white px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Update</button>
-                </div>
-            </form>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-function updateAppointment(event, id) {
-    event.preventDefault();
-    alert(`Appointment ${id} updated successfully!`);
-    event.target.closest('.fixed').remove();
-    loadAppointments();
-}
-
-function deleteAppointment(id) {
-    if (confirm('Are you sure you want to delete this appointment?')) {
-        // Simulate delete
-        alert(`Appointment ${id} deleted successfully!`);
-        loadAppointments();
-    }
-}
+const calendar = new CalendarManager();

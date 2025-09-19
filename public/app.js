@@ -267,6 +267,26 @@ class CRMApp {
             </div>
         </div>
 
+        <!-- View Contact Modal -->
+        <div id="viewContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-medium text-gray-900">Patient Details</h3>
+                        <button class="close-view text-gray-400 hover:text-gray-600">×</button>
+                    </div>
+                    
+                    <div id="viewContactContent" class="space-y-3">
+                        <!-- Content will be populated dynamically -->
+                    </div>
+                    
+                    <div class="flex justify-end pt-4">
+                        <button class="close-view px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Edit Contact Modal -->
         <div id="editContactModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
             <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
@@ -333,12 +353,17 @@ class CRMApp {
         const addContactBtn = document.getElementById('addContactBtn');
         const addContactModal = document.getElementById('addContactModal');
         const editContactModal = document.getElementById('editContactModal');
+        const viewContactModal = document.getElementById('viewContactModal');
         const closeModal = document.querySelector('.close');
         const closeEditModal = document.querySelector('.close-edit');
+        const closeViewModals = document.querySelectorAll('.close-view');
 
         addContactBtn.onclick = () => addContactModal.style.display = 'block';
         closeModal.onclick = () => addContactModal.style.display = 'none';
         closeEditModal.onclick = () => editContactModal.style.display = 'none';
+        closeViewModals.forEach(btn => {
+            btn.onclick = () => viewContactModal.style.display = 'none';
+        });
 
         document.getElementById('addContactForm').onsubmit = (e) => {
             e.preventDefault();
@@ -353,6 +378,7 @@ class CRMApp {
         window.onclick = (event) => {
             if (event.target === addContactModal) addContactModal.style.display = 'none';
             if (event.target === editContactModal) editContactModal.style.display = 'none';
+            if (event.target === viewContactModal) viewContactModal.style.display = 'none';
         };
     }
 
@@ -442,11 +468,11 @@ class CRMApp {
                 this.loadDashboardStats();
             } else {
                 const error = await response.json();
-                alert('Error: ' + error.error);
+                this.showErrorMessage('Error: ' + error.error);
             }
         } catch (error) {
             console.error('Error adding contact:', error);
-            alert('Failed to add patient');
+            this.showErrorMessage('Failed to add patient');
         }
     }
 
@@ -454,9 +480,38 @@ class CRMApp {
         try {
             const response = await fetch(`/api/contacts/${id}`);
             const contact = await response.json();
-            alert(`Patient Details:\nName: ${contact.first_name} ${contact.last_name}\nEmail: ${contact.email}\nPhone: ${contact.phone}\nStatus: ${contact.status}\nComplaint: ${contact.primary_complaint}`);
+            
+            const content = document.getElementById('viewContactContent');
+            content.innerHTML = `
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Name</label>
+                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.first_name)} ${this.escapeHtml(contact.last_name)}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email</label>
+                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.email)}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Phone</label>
+                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.phone) || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Status</label>
+                        <span class="mt-1 inline-flex px-2 py-1 text-xs font-semibold rounded-full ${this.getStatusColor(contact.status)}">
+                            ${this.escapeHtml(contact.status)}
+                        </span>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Primary Complaint</label>
+                        <p class="mt-1 text-sm text-gray-900">${this.escapeHtml(contact.primary_complaint) || 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('viewContactModal').style.display = 'block';
         } catch (error) {
-            alert('Error loading patient details');
+            this.showErrorMessage('Error loading patient details');
         }
     }
 
@@ -571,6 +626,22 @@ class CRMApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    showSuccessMessage(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    showErrorMessage(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
     }
 }
 

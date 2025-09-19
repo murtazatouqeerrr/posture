@@ -1539,6 +1539,64 @@ app.get('/api/treatment-plans/:id', (req, res) => {
     });
 });
 
+// POST /api/treatment-plans - Create new treatment plan
+app.post('/api/treatment-plans', (req, res) => {
+    const { name, description, duration_weeks, sessions_per_week, price_per_session } = req.body;
+    
+    if (!name || !description) {
+        return res.status(400).json({ error: 'Name and description are required' });
+    }
+    
+    const sql = `INSERT INTO treatment_plans (name, description, duration_weeks, sessions_per_week, price_per_session, created_at) 
+                 VALUES (?, ?, ?, ?, ?, datetime('now'))`;
+    
+    db.run(sql, [name, description, duration_weeks, sessions_per_week, price_per_session], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        res.json({ id: this.lastID, message: 'Treatment plan created successfully' });
+    });
+});
+
+// PUT /api/treatment-plans/:id - Update treatment plan
+app.put('/api/treatment-plans/:id', (req, res) => {
+    const { name, description, duration_weeks, sessions_per_week, price_per_session } = req.body;
+    
+    const sql = `UPDATE treatment_plans 
+                 SET name = ?, description = ?, duration_weeks = ?, sessions_per_week = ?, price_per_session = ?
+                 WHERE id = ?`;
+    
+    db.run(sql, [name, description, duration_weeks, sessions_per_week, price_per_session, req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'Treatment plan not found' });
+            return;
+        }
+        res.json({ message: 'Treatment plan updated successfully' });
+    });
+});
+
+// DELETE /api/treatment-plans/:id - Delete treatment plan
+app.delete('/api/treatment-plans/:id', (req, res) => {
+    const sql = `DELETE FROM treatment_plans WHERE id = ?`;
+    
+    db.run(sql, [req.params.id], function(err) {
+        if (err) {
+            res.status(400).json({ error: err.message });
+            return;
+        }
+        if (this.changes === 0) {
+            res.status(404).json({ error: 'Treatment plan not found' });
+            return;
+        }
+        res.json({ message: 'Treatment plan deleted successfully' });
+    });
+});
+
 // Catch-all route for SPA - serve index.html for any non-API route
 app.get('*', (req, res) => {
     // Don't serve index.html for API routes
