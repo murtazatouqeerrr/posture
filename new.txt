@@ -1,0 +1,98 @@
+Command to QChat:
+
+"Act as the lead architect and full-stack developer for the Posture Perfect CRM. We are embarking on a multi-phase project to transform the current application into a complete, all-in-one practice management solution. Our goal is to incorporate advanced marketing, financial, operational, and patient-experience features.
+
+We will follow an agile, phased approach. For each phase, you will provide the complete code, database modifications, and detailed instructions.
+
+Phase 1: Foundation & Core Enhancement (Pre-requisites)
+
+Confirm our current stack: Node.js/Express backend, SQLite database, and a Tailwind CSS frontend SPA.
+
+Ensure the foundational modules are rock-solid: Authentication, Patient Profile, Admin Dashboard, and Scheduling.
+
+Phase 2: Financial Powerhouse
+
+Module: Integrated Payments
+
+Integrate the Stripe API. Generate the code to create and manage Stripe Customers for each patient.
+
+Create invoices table with a stripe_payment_intent_id column.
+
+Build a frontend component to securely capture payment methods.
+
+Create endpoints to: POST /api/create-payment-intent, POST /api/confirm-payment.
+
+Build a "Billing" tab in the patient profile to view invoice history and make payments.
+
+Module: Recurring Billing & Subscriptions
+
+Create a subscriptions table linked to patients and a plans table (e.g., "Weekly Session Plan").
+
+Implement logic using Stripe subscriptions or a custom cron job to handle recurring billing.
+
+Module: Financial Reporting
+
+Create an advanced analytics endpoint: GET /api/admin/analytics/financial.
+
+Generate UI components with Chart.js to visualize revenue trends, revenue by service, and outstanding invoices.
+
+Phase 3: Marketing & Automation Engine
+
+Module: Email & SMS Drip Campaigns
+
+Integrate with SendGrid (for email) and Twilio (for SMS) APIs.
+
+Create tables campaigns and automated_messages.
+
+Build a workflow engine that triggers messages based on patient status or dates.
+
+Create an admin UI to build and manage these sequences.
+
+Module: Referral Program
+
+Add a referred_by field (FK to patients.id) to the patients table.
+
+Build logic to track successful referrals and generate discount codes or track rewards.
+
+Phase 4: Patient Self-Service Portal
+
+Module: Patient Login & Portal
+
+Enhance authentication to distinguish between staff_logins and patient_logins.
+
+Build a separate SPA view or a dedicated subdomain for patients.
+
+Features: Profile management, appointment booking, exercise video library, and secure messaging.
+
+Module: Online Booking
+
+Create a public-facing booking page that integrates with the appointments table.
+
+Implement availability logic to prevent double-booking.
+
+Phase 5: Advanced Operations & Compliance
+
+Module: Internal Knowledge Base
+
+Create a simple documents table with a category field (e.g., 'SOP', 'Form Template').
+
+Build a secure UI for staff to view and manage these internal documents.
+
+Module: HIPAA Compliance Tools
+
+Implement comprehensive audit logging. Create an audit_log table that records every significant action (user, action, timestamp, patient_id).
+
+Add session timeout logic to the frontend and backend.
+
+Technical Execution Plan:
+For each phase and module, you will provide:
+
+Database SQL: All necessary CREATE TABLE and ALTER TABLE statements.
+
+Backend Endpoints: Complete Node.js/Express code for all new API routes, including third-party API integrations (Stripe, Twilio, SendGrid).
+
+Frontend Components: Tailwind CSS-styled HTML & JavaScript for the new UI elements, integrated into our SPA structure.
+
+Security & Error Handling: Robust validation and error handling for all new features.
+
+Let's begin with Phase 2: Financial Powerhouse. We will start by integrating the Stripe API. First, provide the plan for the database changes and the setup steps for the Stripe Node.js library."

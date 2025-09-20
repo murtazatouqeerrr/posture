@@ -1,0 +1,69 @@
+"Act as a full-stack developer. We are enhancing the Posture Perfect CRM for a physical therapy practice. We need to build a detailed Patient Profile module that goes beyond the basic contacts table.
+
+Please follow these steps:
+
+1. Enhance the Database Schema:
+Generate SQL code to create these new tables linked to the existing contacts table (which we will now treat as the core patients table).
+
+Table: patient_assessments
+
+id (INT, PK)
+
+patient_id (INT, FK to contacts.id)
+
+assessment_date (DATETIME) // Date of the initial free assessment
+
+therapist_notes (TEXT) // Subjective notes from the conversation
+
+observed_posture (TEXT) // Objective findings
+
+recommendations (TEXT) // Recommended treatment plan
+
+created_at (DATETIME)
+
+Table: patient_sessions
+
+id (INT, PK)
+
+patient_id (INT, FK to contacts.id)
+
+session_date (DATETIME)
+
+type (TEXT) // e.g., 'Initial Assessment', '1-on-1 Treatment', 'Follow-up'
+
+notes (TEXT) // What was done in the session? Exercises, manual therapy, etc.
+
+pain_level_pre (INT) // Patient's pain level (1-10) before session
+
+pain_level_post (INT) // Patient's pain level (1-10) after session
+
+homework_assigned (TEXT) // Exercises for the patient to do at home
+
+2. Create the Backend API Endpoints:
+Generate new Express.js routes in server.js for:
+
+POST /api/patients/:id/assessment - To add a new assessment for a specific patient.
+
+GET /api/patients/:id/assessments - To get all assessments for a patient.
+
+POST /api/patients/:id/session - To log a new treatment session.
+
+GET /api/patients/:id/sessions - To get all sessions for a patient.
+
+3. Build the Frontend Patient Detail View:
+Generate a new HTML page or a dynamic section in the dashboard: public/patient-profile.html.
+This page should:
+
+Show the patient's basic info at the top (from the contacts table).
+
+Have a form to "Add Initial Assessment Notes" that calls the POST /api/patients/:id/assessment endpoint.
+
+Have a form to "Log a New Session" that calls the POST /api/patients/:id/session endpoint.
+
+Display a Timeline History that shows all of the patient's past sessions and assessments in reverse chronological order. This history should show the date, type of session, and a snippet of the notes.
+
+4. Update the Main Dashboard:
+Modify the existing dashboard table to make each patient's name a clickable link that takes you to their full patient-profile.html page, passing the patient ID in the URL.
+
+Please provide the complete code for the SQL, Node.js/Express API endpoints, and the HTML/JS for the frontend profile page.
+"

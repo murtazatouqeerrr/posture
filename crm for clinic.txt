@@ -1,0 +1,43 @@
+Module 1: Database & Contact Schema
+We need to create the database tables.
+Command to QChat:
+"Now, generate the SQL code to create an SQLite database file named crm.db. We need a contacts table with the following columns: id (integer, primary key), first_name (text), last_name (text), email (text, unique), phone (text), primary_complaint (text, to store the pain info from the website form), status (text, can be 'Lead', 'Client', 'Past Client'), created_at (datetime default current timestamp). Also, write the Node.js code to initialize the database and connect to it when the server starts."
+
+Module 2: API Endpoints (Backend)
+The server needs routes to handle data.
+Command to QChat:
+"Generate the Express.js server code in server.js to create the following API endpoints for the contacts table:
+POST /api/contacts: To add a new contact from the website form. The request body will contain first_name, last_name, email, phone, primary_complaint.
+GET /api/contacts: To fetch all contacts for the CRM dashboard.
+GET /api/contacts/:id: To get a single contact's details.
+PUT /api/contacts/:id: To update a contact's information (e.g., change their status from 'Lead' to 'Client').
+DELETE /api/contacts/:id: To delete a contact.
+Make sure to use the sqlite3 package to perform these database operations and use appropriate error handling."
+
+Module 3: Lead Capture from Website (Integration)
+This is crucial to connect the Lovable prototype to our new CRM.
+Command to QChat:
+"The website is built on Lovable. Generate a JavaScript code snippet that I can add to the 'Thank You' page or as a script on the form submission on the Lovable website. This script should take the form data (first_name, last_name, email, phone, message (which is the primary complaint)) and send it as a JSON payload via a POST request to our CRM's backend endpoint, which is https://our-crm-domain.com/api/contacts. Include error handling and a console log for success."
+Note: You will need to replace https://our-crm-domain.com with the actual URL where you host your CRM backend.
+
+Module 4: CRM Dashboard (Frontend)
+This is the interface where the business owner views and manages leads.
+Command to QChat:
+"Generate an HTML file for the main CRM dashboard (public/index.html). It should include:
+A table that lists all contacts, showing their name, email, status, and primary complaint.
+A 'Add New Contact' button that opens a form.
+Each contact in the table should have 'View', 'Edit', and 'Delete' buttons.
+The page should use native JavaScript (or Fetch API) to call the GET /api/contacts endpoint when it loads and dynamically populate the table with the data. Also, generate the corresponding CSS to make the table look clean and professional."
+
+Module 5: Contact Details & Editing (Frontend)
+Command to QChat:
+"Now, generate a modal (popup) or a separate page for viewing and editing a contact's details. This view should appear when the 'Edit' button is clicked on a contact in the dashboard table. It should pre-fill a form with the contact's current data and, upon submission, send a PUT request to /api/contacts/:id to update the record in the database. Generate the HTML, CSS, and JavaScript for this functionality."
+
+Module 6: Appointment & Task Management (Advanced)
+Command to QChat:
+"Let's extend the database and CRM. Generate SQL code to create two new tables:
+appointments: id, contact_id (foreign key to contacts.id), date_time, type (e.g., 'Free Assessment', 'Paid Session'), notes, status (e.g., 'Scheduled', 'Completed', 'Cancelled').
+tasks: id, title, description, due_date, associated_contact_id (foreign key), status (e.g., 'Todo', 'Done').
+Now, generate the API endpoints (POST, GET, PUT, DELETE) for both appointments and tasks."
+Follow-up Command:
+"Now, generate the frontend HTML and JavaScript for a new 'Calendar' tab on the dashboard. It should show a simple list of upcoming appointments, fetched from the GET /api/appointments endpoint. Also, generate a form to add a new appointment, linking it to an existing contact from the database."

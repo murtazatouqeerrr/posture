@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pre-Visit Checklist - Posture Perfect CRM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Pre-Visit Checklist</h2>
+            
+            <!-- Patient Info -->
+            <div id="patientInfo" class="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h3 class="font-semibold text-blue-800">Patient Information</h3>
+                <p id="patientName" class="text-blue-600"></p>
+                <p id="patientEmail" class="text-blue-600"></p>
+            </div>
+
+            <!-- Checklist Items -->
+            <div class="space-y-4">
+                <!-- Intake Forms Sent -->
+                <div class="flex items-center justify-between p-4 border rounded-lg" id="intakeFormsSent">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="intakeFormsIcon">
+                            <svg class="w-4 h-4 text-green-500 hidden" id="intakeFormsCheck" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">Intake Forms Sent</h4>
+                            <p class="text-sm text-gray-600">Digital intake forms emailed to patient</p>
+                        </div>
+                    </div>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="triggerIntakeForms()">
+                        Send Forms
+                    </button>
+                </div>
+
+                <!-- Intake Forms Completed -->
+                <div class="flex items-center justify-between p-4 border rounded-lg" id="intakeFormsCompleted">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="intakeCompletedIcon">
+                            <svg class="w-4 h-4 text-green-500 hidden" id="intakeCompletedCheck" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">Intake Forms Completed</h4>
+                            <p class="text-sm text-gray-600">Patient has submitted intake forms</p>
+                        </div>
+                    </div>
+                    <span class="text-sm text-gray-500">Waiting for patient</span>
+                </div>
+
+                <!-- Credit Card on File -->
+                <div class="flex items-center justify-between p-4 border rounded-lg" id="ccOnFile">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="ccIcon">
+                            <svg class="w-4 h-4 text-green-500 hidden" id="ccCheck" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">Credit Card on File</h4>
+                            <p class="text-sm text-gray-600">Collect payment method for future sessions</p>
+                        </div>
+                    </div>
+                    <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" onclick="markCCComplete()">
+                        Mark Complete
+                    </button>
+                </div>
+
+                <!-- First Appointment Scheduled -->
+                <div class="flex items-center justify-between p-4 border rounded-lg" id="firstAppointment">
+                    <div class="flex items-center">
+                        <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="appointmentIcon">
+                            <svg class="w-4 h-4 text-green-500 hidden" id="appointmentCheck" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-medium">First Appointment Scheduled</h4>
+                            <p class="text-sm text-gray-600">Initial assessment appointment booked</p>
+                        </div>
+                    </div>
+                    <button class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700" onclick="scheduleAppointment()">
+                        Schedule
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tasks List -->
+            <div class="mt-8">
+                <h3 class="text-lg font-semibold mb-4">Onboarding Tasks</h3>
+                <div id="tasksList" class="space-y-2">
+                    <!-- Tasks will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPatientId = null;
+
+        // Get patient ID from URL parameters
+        function getPatientId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('patientId');
+        }
+
+        // Load patient data and checklist
+        async function loadPreVisitChecklist() {
+            currentPatientId = getPatientId();
+            if (!currentPatientId) {
+                alert('No patient ID provided');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/patients/${currentPatientId}/pre-visit-checklist`);
+                const data = await response.json();
+                
+                // Update patient info
+                document.getElementById('patientName').textContent = `${data.patient.first_name} ${data.patient.last_name}`;
+                document.getElementById('patientEmail').textContent = data.patient.email;
+                
+                // Update checklist status
+                updateChecklistUI(data.pre_visit_status);
+                
+                // Load tasks
+                loadTasks(data.tasks);
+            } catch (error) {
+                console.error('Error loading checklist:', error);
+            }
+        }
+
+        // Update checklist UI based on status
+        function updateChecklistUI(status) {
+            updateCheckItem('intakeFormsSent', status.intake_forms_sent);
+            updateCheckItem('intakeFormsCompleted', status.intake_forms_completed);
+            updateCheckItem('ccOnFile', status.cc_on_file);
+            updateCheckItem('firstAppointment', status.first_appointment_scheduled);
+        }
+
+        // Update individual check item
+        function updateCheckItem(itemId, completed) {
+            const item = document.getElementById(itemId);
+            const icon = item.querySelector('[id$="Icon"]');
+            const check = item.querySelector('[id$="Check"]');
+            
+            if (completed) {
+                icon.classList.add('bg-green-500', 'border-green-500');
+                check.classList.remove('hidden');
+                item.classList.add('bg-green-50');
+            } else {
+                icon.classList.add('border-gray-300');
+                check.classList.add('hidden');
+            }
+        }
+
+        // Load tasks
+        function loadTasks(tasks) {
+            const tasksList = document.getElementById('tasksList');
+            tasksList.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const taskDiv = document.createElement('div');
+                taskDiv.className = `p-3 border rounded ${task.status === 'completed' ? 'bg-green-50' : 'bg-yellow-50'}`;
+                taskDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="font-medium">${task.task_type.replace(/_/g, ' ').toUpperCase()}</span>
+                            <p class="text-sm text-gray-600">${task.notes}</p>
+                        </div>
+                        <span class="px-2 py-1 text-xs rounded ${task.status === 'completed' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">
+                            ${task.status}
+                        </span>
+                    </div>
+                `;
+                tasksList.appendChild(taskDiv);
+            });
+        }
+
+        // Trigger intake forms
+        async function triggerIntakeForms() {
+            try {
+                const response = await fetch(`/api/patients/${currentPatientId}/trigger-automation`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Intake forms sent successfully!');
+                    loadPreVisitChecklist(); // Reload to update UI
+                }
+            } catch (error) {
+                console.error('Error triggering intake forms:', error);
+            }
+        }
+
+        // Mark CC complete
+        async function markCCComplete() {
+            // This would typically open a payment form or mark the task as complete
+            alert('Credit card collection feature would be implemented here');
+        }
+
+        // Schedule appointment
+        function scheduleAppointment() {
+            // Redirect to appointment scheduling
+            window.location.href = `/appointments.html?patientId=${currentPatientId}`;
+        }
+
+        // Load data when page loads
+        document.addEventListener('DOMContentLoaded', loadPreVisitChecklist);
+    </script>
+</body>
+</html>

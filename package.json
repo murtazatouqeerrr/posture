@@ -1,0 +1,36 @@
+{
+  "name": "posture-perfect-crm",
+  "version": "2.0.0",
+  "description": "Complete CRM system for Posture Perfect physical therapy practice",
+  "main": "api/index.js",
+  "scripts": {
+    "start": "node server-final-working.js",
+    "dev": "nodemon server-final-working.js",
+    "build": "echo 'Build complete'",
+    "vercel-build": "echo 'Vercel build complete'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "crm",
+    "physical-therapy",
+    "patient-management",
+    "healthcare"
+  ],
+  "author": "Posture Perfect",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.21.2",
+    "express-session": "^1.17.3",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+}

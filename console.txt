@@ -1,0 +1,5 @@
+admin-dashboard.js:501 
+ POST https://posture-beta.vercel.app/api/admin/users net::ERR_NETWORK_CHANGED
+admin-dashboard.js:523 ❌ Error creating user: TypeError: Failed to fetch
+    at HTMLFormElement.<anonymous> (admin-dashboard.js:501:36)
+(anonymous)	@	admin-dashboard.js:523
