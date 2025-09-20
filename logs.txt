@@ -1,84 +1,120 @@
-🔄 Starting Posture Perfect CRM Server...
-📦 Express loaded
-🚀 Express app created, PORT: 3000
-🔄 Setting up middleware...
-✅ Middleware configured
-🔄 Attempting to load SQLite...
-❌ SQLite module error: \\?\C:\Users\murtaza\Desktop\task\node_modules\sqlite3\build\Release\node_sqlite3.node is not a valid Win32 application.
-\\?\C:\Users\murtaza\Desktop\task\node_modules\sqlite3\build\Release\node_sqlite3.node
-📝 Using mock data instead
-🔄 Setting up contacts API...
-🔄 Setting up treatment plans API...
-🔄 Setting up missing endpoints...
-🔄 Setting up static routes...
-✅ All routes configured
-🔄 Starting server...
-✅ Server setup complete
-🚀 Posture Perfect CRM Server running on http://localhost:3000
-✅ DATABASE WORKING (SQLite or Mock)
-✅ ALL CONSOLE ERRORS FIXED
-✅ SERVER READY FOR TESTING
-Database mode: Mock Data
-📞 GET /api/contacts called
-✅ Mock contacts returned: 1 records
-📅 GET /api/appointments called
-📞 GET /api/contacts called
-✅ Mock contacts returned: 1 records
-💰 GET /api/invoices called
-📞 GET /api/contacts called
-✅ Mock contacts returned: 1 records
-📊 GET /api/subscriptions called
-📊 GET /api/subscription-plans called
-📞 GET /api/contacts called
-✅ Mock contacts returned: 1 records
-📊 GET /api/reports/leads-per-month called
-📊 GET /api/reports/conversion-rate called
-📊 GET /api/reports/revenue-per-month called
-📊 GET /api/admin/analytics/financial called
-📋 GET /api/treatment-plans called
-✅ Mock treatment plans returned: 2 records
-📢 GET /campaigns called
-📢 GET /api/campaigns called
-🔔 GET /api/nudge/history called
-🔔 GET /api/nudge/history called
+Skip to content
+Murtaza's projects
+Murtaza's projects
+
+Hobby
+
+posture
+
+AtqyvaqxX
 
 
-C:\Users\murtaza\Desktop\task>npm rebuild sqlite3
-rebuilt dependencies successfully
+Find…
+F
 
-C:\Users\murtaza\Desktop\task>npm start
+Deployment Details
+Build Failed
+Can't parse json file /vercel/path0/package.json: Unexpected non-whitespace character after JSON at position 815 while parsing '{ "name": "posture-perfect-crm", "ve'
 
-> posture-perfect-crm@2.0.0 start
-> node server-final-working.js
+Created
+github/murtazatouqeerrr
+murtazatouqeerrr
+1m ago
+Status
+Error
+Latest
+Duration
+2s
+1m ago
+Environment
+Production
+Domains
+posture-git-main-murtazas-projects-b2d017bf.vercel.app
+posture-1k7n1ba86-murtazas-projects-b2d017bf.vercel.app
+Source
+main
+49d58d4
+all
 
-🔄 Starting Posture Perfect CRM Server...
-📦 Express loaded
-🚀 Express app created, PORT: 3000
-🔄 Setting up middleware...
-✅ Middleware configured
-🔄 Attempting to load SQLite...
-🔄 Setting up contacts API...
-🔄 Setting up treatment plans API...
-🔄 Setting up missing endpoints...
-🔄 Setting up static routes...
-✅ All routes configured
-🔄 Starting server...
-✅ Server setup complete
-🚀 Posture Perfect CRM Server running on http://localhost:3000
-✅ DATABASE WORKING (SQLite or Mock)
-✅ ALL CONSOLE ERRORS FIXED
-✅ SERVER READY FOR TESTING
-Database mode: Mock Data
-✅ SQLite connected successfully
-📞 GET /api/contacts called
-✅ SQLite contacts fetched: 1 records
-📅 GET /api/appointments called
-📞 GET /api/contacts called
-✅ SQLite contacts fetched: 1 records
-💰 GET /api/invoices called
-📞 GET /api/contacts called
-✅ SQLite contacts fetched: 1 records
-📊 GET /api/subscriptions called
-📊 GET /api/subscription-plans called
-📞 GET /api/contacts called
-✅ SQLite contacts fetched: 1 records
+Deployment Configuration
+Fluid Compute
+Deployment Protection
+Skew Protection
+Cold Start Prevention
+Build Logs
+2s
+23 lines
+
+1
+
+1
+Find in logs
+CtrlF
+05:36:59.522 
+Removed 56 ignored files defined in .vercelignore
+05:36:59.523 
+  /.git/config
+05:36:59.523 
+  /.git/description
+05:36:59.523 
+  /.git/FETCH_HEAD
+05:36:59.523 
+  /.git/HEAD
+05:36:59.523 
+  /.git/hooks/applypatch-msg.sample
+05:36:59.523 
+  /.git/hooks/commit-msg.sample
+05:36:59.523 
+  /.git/hooks/fsmonitor-watchman.sample
+05:36:59.523 
+  /.git/hooks/post-update.sample
+05:36:59.523 
+  /.git/hooks/pre-applypatch.sample
+05:36:59.523 
+  /.git/hooks/pre-commit.sample
+05:36:59.753 
+Skipping build cache since Node.js version changed from "22.x" to ""
+05:37:00.164 
+Running "vercel build"
+05:37:00.654 
+Vercel CLI 48.0.2
+05:37:00.799 
+Error: Can't parse json file /vercel/path0/package.json: Unexpected non-whitespace character after JSON at position 815 while parsing '{
+05:37:00.799 
+  "name": "posture-perfect-crm",
+05:37:00.799 
+  "ve'
+Deployment Summary
+Assigning Custom Domains
+Runtime Logs
+
+View and debug runtime logs & errors
+
+Observability
+
+Monitor app health & performance
+
+Speed Insights
+
+Not Enabled
+Performance metrics from real users
+
+Web Analytics
+
+Not Enabled
+Analyze visitors & traffic in real-time
+
+Home
+Docs
+Guides
+Help
+Contact
+All systems normal
+
+Select a display theme:
+
+system
+
+light
+
+dark

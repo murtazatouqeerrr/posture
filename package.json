@@ -1,47 +1,29 @@
 {
   "name": "posture-perfect-crm",
   "version": "2.0.0",
-  "description": "Complete CRM system for Posture Perfect physical therapy practice with Stripe integration",
+  "description": "Complete CRM system for Posture Perfect physical therapy practice",
   "main": "api/index.js",
   "scripts": {
     "start": "node server-final-working.js",
     "dev": "nodemon server-final-working.js",
     "build": "echo 'Build complete'",
-    "vercel-build": "echo 'Vercel build complete'"
-  },
-    "start:windows": "node server-windows.js",
-    "dev": "node server-production.js",
-    "dev:windows": "nodemon server-windows.js",
-    "build": "echo 'Build complete'",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy": "npm run build && npm start",
-    "db:init": "node -e \"require('./server.js')\"",
-    "fix:windows": "npm cache clean --force && npm install && npm rebuild better-sqlite3"
+    "vercel-build": "echo 'Vercel build complete'",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
     "crm",
     "physical-therapy",
     "patient-management",
-    "healthcare",
-    "stripe",
-    "payments",
-    "subscriptions"
+    "healthcare"
   ],
   "author": "Posture Perfect",
   "license": "MIT",
   "dependencies": {
-    "@sendgrid/mail": "^8.1.6",
-    "bcryptjs": "^2.4.3",
-    "better-sqlite3": "^9.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.21.2",
     "express-session": "^1.17.3",
-    "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.6",
-    "sqlite3": "^5.1.7",
-    "stripe": "^14.9.0",
-    "twilio": "^5.10.0"
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
