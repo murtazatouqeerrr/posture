@@ -4,14 +4,17 @@ let subscriptionPlansData = [];
 let subscriptionContactsData = [];
 
 async function loadSubscriptionsView() {
-    console.log('🔄 Loading subscriptions view...');
+    console.log('🔄 Loading subscriptions view... [UPDATED v3]');
+    console.log('🔄 About to make API calls...');
     
     try {
+        console.log('🔄 Making fetch calls...');
         const [subscriptionsResponse, plansResponse, contactsResponse] = await Promise.all([
             fetch('/api/subscriptions'),
             fetch('/api/subscription-plans'),
             fetch('/api/contacts')
         ]);
+        console.log('🔄 Fetch calls completed');
 
         if (!subscriptionsResponse.ok || !plansResponse.ok || !contactsResponse.ok) {
             throw new Error('Failed to fetch subscription data');
@@ -22,6 +25,8 @@ async function loadSubscriptionsView() {
         subscriptionContactsData = await contactsResponse.json();
         
         console.log('✅ Subscriptions data loaded successfully');
+        console.log('📊 Plans data:', subscriptionPlansData);
+        console.log('📊 Subscriptions data:', subscriptionsData);
         renderSubscriptionsView();
     } catch (error) {
         console.error('❌ Subscriptions loading error:', error);
@@ -68,7 +73,7 @@ function renderSubscriptionsView() {
                             <p class="text-gray-600 mt-2">${plan.description}</p>
                             <div class="mt-4">
                                 <span class="text-2xl font-bold text-primary">$${plan.price}</span>
-                                <span class="text-gray-500">/${plan.interval}</span>
+                                <span class="text-gray-500">/${plan.billing_interval}</span>
                             </div>
                             <div class="mt-4 text-sm text-gray-500">
                                 Active subscriptions: ${subscriptionsData.filter(s => s.plan_id === plan.id && s.status === 'active').length}
@@ -106,7 +111,7 @@ function renderSubscriptionsView() {
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">${plan ? plan.name : 'Unknown Plan'}</div>
-                                            <div class="text-sm text-gray-500">$${plan ? plan.price : '0'}/${plan ? plan.interval : ''}</div>
+                                            <div class="text-sm text-gray-500">$${plan ? plan.price : '0'}/${plan ? plan.billing_interval : ''}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${subscription.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">

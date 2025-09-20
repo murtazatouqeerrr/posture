@@ -415,7 +415,7 @@ async function loadCampaignsView() {
         const doc = parser.parseFromString(html, 'text/html');
         const mainContent = doc.querySelector('main') || doc.querySelector('.container') || doc.body;
         
-        document.getElementById('main-content').innerHTML = mainContent.innerHTML;
+        document.getElementById('app').innerHTML = mainContent.innerHTML;
         
         // Load campaigns.js script if it exists
         const script = document.createElement('script');
@@ -434,7 +434,7 @@ async function loadCampaignsView() {
         
     } catch (error) {
         console.error('❌ Campaigns loading error:', error);
-        document.getElementById('main-content').innerHTML = `
+        document.getElementById('app').innerHTML = `
             <div class="error-message">
                 <h2>Error Loading Campaigns</h2>
                 <p>Unable to load campaigns view: ${error.message}</p>
@@ -858,19 +858,7 @@ async function loadCalendarView() {
     `;
 }
 
-async function loadSubscriptionsView() {
-    document.getElementById('app').innerHTML = `
-        <div class="p-6">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">🔄 Subscriptions</h2>
-                <p class="text-gray-600">Manage recurring billing and subscriptions</p>
-            </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-gray-500">Subscription management coming soon...</p>
-            </div>
-        </div>
-    `;
-}
+// loadSubscriptionsView() is defined in subscriptions.js
 
 async function loadInvoicesView() {
     document.getElementById('app').innerHTML = `

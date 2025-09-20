@@ -394,10 +394,26 @@ app.get('/api/subscriptions', (req, res) => {
 
 app.get('/api/subscription-plans', (req, res) => {
     console.log('📊 GET /api/subscription-plans called');
-    res.json([
-        { id: 1, name: 'Basic Plan', price: 29.99, features: ['Basic features'] },
-        { id: 2, name: 'Pro Plan', price: 59.99, features: ['All features'] }
-    ]);
+    
+    if (usingSQLite && db) {
+        db.all('SELECT * FROM subscription_plans WHERE active = 1', [], (err, rows) => {
+            if (err) {
+                console.error('❌ SQLite subscription plans error:', err.message);
+                res.json([
+                    { id: 1, name: 'Basic Plan', price: 29.99, features: ['Basic features'] },
+                    { id: 2, name: 'Pro Plan', price: 59.99, features: ['All features'] }
+                ]);
+                return;
+            }
+            console.log('✅ SQLite subscription plans fetched:', rows.length, 'records');
+            res.json(rows);
+        });
+    } else {
+        res.json([
+            { id: 1, name: 'Basic Plan', price: 29.99, features: ['Basic features'] },
+            { id: 2, name: 'Pro Plan', price: 59.99, features: ['All features'] }
+        ]);
+    }
 });
 
 // ADMIN DASHBOARD ENDPOINTS
@@ -737,7 +753,14 @@ app.get('/api/invoices', (req, res) => {
     console.log('💰 GET /api/invoices called');
     
     if (usingSQLite && db) {
-        db.all('SELECT * FROM invoices ORDER BY created_at DESC', [], (err, rows) => {
+        db.all(`SELECT 
+                    i.*,
+                    c.first_name,
+                    c.last_name,
+                    c.email
+                FROM invoices i
+                LEFT JOIN contacts c ON i.contact_id = c.id
+                ORDER BY i.created_at DESC`, [], (err, rows) => {
             if (err) {
                 console.error('❌ SQLite invoices error:', err.message);
                 res.json([]);
@@ -834,6 +857,48 @@ app.post('/api/campaigns', (req, res) => {
         );
     } else {
         res.json({ id: 1, message: 'Mock campaign created' });
+    }
+});
+
+// TEMPLATES API - Using real database data
+app.get('/api/templates', (req, res) => {
+    console.log('📋 GET /api/templates called');
+    
+    if (usingSQLite && db) {
+        db.all('SELECT * FROM templates ORDER BY created_at DESC', [], (err, rows) => {
+            if (err) {
+                console.error('❌ SQLite templates error:', err.message);
+                res.json([]);
+            } else {
+                console.log('✅ SQLite templates fetched:', rows.length, 'records');
+                res.json(rows);
+            }
+        });
+    } else {
+        console.log('✅ Mock templates returned: 0 records');
+        res.json([]);
+    }
+});
+
+app.post('/api/templates', (req, res) => {
+    console.log('📋 POST /api/templates called with:', req.body);
+    const { name, type, subject, content, variables } = req.body;
+    
+    if (usingSQLite && db) {
+        db.run(`INSERT INTO templates (name, type, subject, content, variables) VALUES (?, ?, ?, ?, ?)`,
+            [name, type, subject, content, variables],
+            function(err) {
+                if (err) {
+                    console.error('❌ Template creation error:', err.message);
+                    res.status(500).json({ error: 'Failed to create template' });
+                } else {
+                    console.log('✅ Template created with ID:', this.lastID);
+                    res.json({ id: this.lastID, message: 'Template created successfully' });
+                }
+            }
+        );
+    } else {
+        res.json({ id: 1, message: 'Mock template created' });
     }
 });
 
