@@ -6,6 +6,12 @@ function initializeCampaigns() {
     const campaignForm = document.getElementById('campaign-form');
     const modalTitle = document.getElementById('modal-title');
 
+    // Check if all elements exist
+    if (!campaignsList || !addCampaignBtn || !campaignModal || !cancelCampaignBtn || !campaignForm || !modalTitle) {
+        console.error('Required campaign elements not found');
+        return;
+    }
+
     let editingCampaignId = null;
 
     const openModal = () => campaignModal.classList.remove('hidden');
@@ -41,24 +47,33 @@ function initializeCampaigns() {
         }
         campaigns.forEach(campaign => {
             const campaignCard = document.createElement('div');
-            campaignCard.className = 'bg-white rounded-lg shadow-md p-6';
+            campaignCard.className = 'bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500';
             campaignCard.innerHTML = `
-                <h2 class="text-xl font-bold mb-2">${campaign.name}</h2>
-                <p class="text-gray-600 mb-4">${campaign.description}</p>
-                <div class="flex justify-between items-center">
-                    <div>
-                        <span class="text-sm font-semibold text-gray-700">Channel:</span>
-                        <span class="text-sm text-gray-900">${campaign.channel}</span>
-                    </div>
-                    <div>
-                        <span class="text-sm font-semibold text-gray-700">Audience:</span>
-                        <span class="text-sm text-gray-900">${campaign.target_audience}</span>
-                    </div>
+                <div class="flex justify-between items-start mb-3">
+                    <h2 class="text-xl font-bold text-gray-800">${campaign.name}</h2>
+                    <span class="px-2 py-1 text-xs rounded-full ${campaign.status === 'Sent' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                        ${campaign.status || 'Draft'}
+                    </span>
                 </div>
-                <div class="mt-4 flex justify-end">
-                    <button class="text-sm text-blue-500 hover:underline mr-4" onclick="editCampaign(${campaign.id})">Edit</button>
-                    <button class="text-sm text-red-500 hover:underline mr-4" onclick="deleteCampaign(${campaign.id})">Delete</button>
-                    <button class="text-sm text-green-500 hover:underline" onclick="sendCampaign(${campaign.id})">Send Now</button>
+                <p class="text-gray-600 mb-3">${campaign.description || 'No description'}</p>
+                <div class="text-sm text-gray-500 mb-4">
+                    <p><strong>Subject:</strong> ${campaign.subject || 'No subject'}</p>
+                    <p><strong>Channel:</strong> ${campaign.channel || 'email'}</p>
+                    <p><strong>Audience:</strong> ${campaign.target_audience || 'all'}</p>
+                </div>
+                <div class="flex justify-between items-center pt-3 border-t">
+                    <div class="text-xs text-gray-400">
+                        Created: ${campaign.created_at ? new Date(campaign.created_at).toLocaleDateString() : 'Unknown'}
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200" onclick="editCampaign(${campaign.id})">
+                            Edit
+                        </button>
+                        <button class="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200" onclick="deleteCampaign(${campaign.id})">
+                            Delete
+                        </button>
+                        ${campaign.status !== 'Sent' ? `<button class="px-3 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200" onclick="sendCampaign(${campaign.id})">Send</button>` : ''}
+                    </div>
                 </div>
             `;
             campaignsList.appendChild(campaignCard);
@@ -143,3 +158,6 @@ function initializeCampaigns() {
 
     fetchCampaigns();
 }
+
+// Initialize campaigns when page loads
+document.addEventListener('DOMContentLoaded', initializeCampaigns);

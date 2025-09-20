@@ -1,7 +1,159 @@
 // CRM Application - Direct Access
 console.log('🚀 CRM App Starting...');
 
+// Utility function to safely get values and prevent undefined
+function safeValue(value, defaultValue = '') {
+    if (value === null || value === undefined || value === 'undefined') {
+        // Return appropriate defaults based on context
+        if (defaultValue === '') {
+            return 'Not Available';
+        }
+        return defaultValue;
+    }
+    return value;
+}
+
+// Utility function to safely format dates
+function safeDate(dateString) {
+    if (!dateString || dateString === 'undefined') return 'No Date Set';
+    try {
+        return new Date(dateString).toLocaleDateString();
+    } catch {
+        return 'Invalid Date';
+    }
+}
+
+// Utility function to safely format currency
+function safeCurrency(amount) {
+    if (amount === null || amount === undefined || amount === 'undefined') return '$0.00';
+    const num = parseFloat(amount);
+    return isNaN(num) ? '$0.00' : `$${num.toFixed(2)}`;
+}
+
+// Utility function for safe text display
+function safeText(text, placeholder = 'No Information') {
+    if (!text || text === 'undefined' || text === null) return placeholder;
+    return text;
+}
+
+// Utility function for safe numbers
+function safeNumber(num, defaultNum = 0) {
+    if (num === null || num === undefined || num === 'undefined' || isNaN(num)) return defaultNum;
+    return parseInt(num) || defaultNum;
+}
+
+// Utility function for safe status
+function safeStatus(status) {
+    if (!status || status === 'undefined') return 'Active';
+    return status;
+}
+
+// Global error handler for fetch requests
+async function safeFetch(url, options = {}) {
+    try {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`Fetch error for ${url}:`, error);
+        throw error;
+    }
+}
+
 let currentView = 'dashboard';
+
+// Global function for subscribe button
+window.subscribeToPackage = function(packageId) {
+    alert(`Subscribing to package ${packageId}. This feature will be implemented with payment integration.`);
+};
+
+// Global function for subscribe button
+window.subscribeToPackage = function(packageId) {
+    alert(`Subscribing to package ${packageId}. This feature will be implemented with payment integration.`);
+};
+
+// Package sidebar functions
+window.showAllPackages = function() {
+    loadPackagesView();
+};
+
+window.showActiveSubscriptions = function() {
+    const content = document.getElementById('package-content');
+    if (content) {
+        content.innerHTML = `
+            <div class="header-section mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Active Subscriptions</h1>
+                <p class="text-gray-600">Manage your current subscriptions</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <p class="text-gray-500">No active subscriptions found.</p>
+            </div>
+        `;
+    }
+};
+
+window.showPackageAnalytics = function() {
+    const content = document.getElementById('package-content');
+    if (content) {
+        content.innerHTML = `
+            <div class="header-section mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Package Analytics</h1>
+                <p class="text-gray-600">View package performance metrics</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <p class="text-gray-500">Analytics dashboard coming soon...</p>
+            </div>
+        `;
+    }
+};
+
+window.showAddPackageForm = function() {
+    const content = document.getElementById('package-content');
+    if (content) {
+        content.innerHTML = `
+            <div class="header-section mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Add New Package</h1>
+                <p class="text-gray-600">Create a new treatment package</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <form class="space-y-4">
+                    <input type="text" placeholder="Package Name" class="w-full border rounded px-3 py-2" required>
+                    <input type="number" placeholder="Number of Sessions" class="w-full border rounded px-3 py-2" required>
+                    <input type="number" placeholder="Price" step="0.01" class="w-full border rounded px-3 py-2" required>
+                    <textarea placeholder="Description" class="w-full border rounded px-3 py-2" rows="3"></textarea>
+                    <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">Add Package</button>
+                </form>
+            </div>
+        `;
+    }
+};
+
+// Pre-visit sidebar functions
+window.showPreVisitForm = function() {
+    loadPreVisitView();
+};
+
+window.showPreVisitInstructions = function() {
+    const content = document.getElementById('previsit-content');
+    if (content) {
+        content.innerHTML = `
+            <div class="header-section mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Pre-Visit Instructions</h1>
+                <p class="text-gray-600">Important information for your appointment</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <ul class="space-y-3 text-gray-700">
+                    <li>• Arrive 15 minutes early for your appointment</li>
+                    <li>• Bring a valid ID and insurance card</li>
+                    <li>• Wear comfortable, loose-fitting clothing</li>
+                    <li>• Bring any recent medical reports or imaging results</li>
+                </ul>
+            </div>
+        `;
+    }
+};
 
 // Navigation handler
 document.addEventListener('click', (e) => {
@@ -64,6 +216,18 @@ async function loadView(viewName) {
                 break;
             case 'campaigns':
                 await loadCampaignsView();
+                break;
+            case 'automation':
+                await showAutomationPanel();
+                break;
+            case 'feedback':
+                await showFeedbackPanel();
+                break;
+            case 'packages':
+                await loadPackagesView();
+                break;
+            case 'pre-visit':
+                await loadPreVisitView();
                 break;
             default:
                 await loadDashboardView();
@@ -224,15 +388,59 @@ async function loadDashboardView() {
 }
 
 async function loadAdminView() {
-    console.log('🛠️ Loading admin view...');
-    document.getElementById('app').innerHTML = await fetch('admin-dashboard.html').then(res => res.text());
-    initializeAdminDashboard();
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">⚙️ Admin Dashboard</h2>
+                <p class="text-gray-600">System administration and settings</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500">Admin dashboard coming soon...</p>
+            </div>
+        </div>
+    `;
 }
 
 async function loadCampaignsView() {
-    console.log('🚀 Loading campaigns view...');
-    document.getElementById('app').innerHTML = await fetch('campaigns.html').then(res => res.text());
-    initializeCampaigns();
+    try {
+        console.log('📢 Loading campaigns view...');
+        const response = await fetch('/campaigns');
+        if (!response.ok) {
+            throw new Error(`Failed to load campaigns: ${response.status}`);
+        }
+        const html = await response.text();
+        
+        // Extract the main content from campaigns.html
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const mainContent = doc.querySelector('main') || doc.querySelector('.container') || doc.body;
+        
+        document.getElementById('main-content').innerHTML = mainContent.innerHTML;
+        
+        // Load campaigns.js script if it exists
+        const script = document.createElement('script');
+        script.src = '/campaigns.js';
+        script.onload = () => {
+            console.log('✅ Campaigns script loaded');
+            // Initialize campaigns if function exists
+            if (typeof initializeCampaigns === 'function') {
+                initializeCampaigns();
+            }
+        };
+        script.onerror = () => {
+            console.log('⚠️ Campaigns script not found, loading basic view');
+        };
+        document.head.appendChild(script);
+        
+    } catch (error) {
+        console.error('❌ Campaigns loading error:', error);
+        document.getElementById('main-content').innerHTML = `
+            <div class="error-message">
+                <h2>Error Loading Campaigns</h2>
+                <p>Unable to load campaigns view: ${error.message}</p>
+            </div>
+        `;
+    }
 }
 
 // Initialize on page load
@@ -441,5 +649,449 @@ async function savePatientChanges(patientId, formData) {
     } catch (error) {
         console.error('❌ Error saving patient:', error);
         showNotification('Error saving patient changes', 'error');
+    }
+}
+
+// NEW MODULE FUNCTIONS
+
+// Automation Hub Panel
+async function showAutomationPanel() {
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">🤖 Automation Hub</h2>
+                <p class="text-gray-600">Manage and monitor all automation systems</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                    <h3 class="font-semibold text-blue-800 mb-2">Pre-Visit Automation</h3>
+                    <p class="text-blue-600 text-sm mb-4">Automatically triggered when lead converts to client</p>
+                    <button onclick="triggerPreVisitDemo()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                        Test Demo
+                    </button>
+                </div>
+                
+                <div class="bg-green-50 p-6 rounded-lg border border-green-200">
+                    <h3 class="font-semibold text-green-800 mb-2">Nudge System</h3>
+                    <p class="text-green-600 text-sm mb-4">Low sessions, renewals, dormant patients</p>
+                    <button onclick="triggerNudgeSystem()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">
+                        Run Nudges
+                    </button>
+                </div>
+                
+                <div class="bg-purple-50 p-6 rounded-lg border border-purple-200">
+                    <h3 class="font-semibold text-purple-800 mb-2">Package Tracking</h3>
+                    <p class="text-purple-600 text-sm mb-4">Session usage and renewals</p>
+                    <a href="/packages" class="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
+                        Manage Packages
+                    </a>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Recent Automation Activity</h3>
+                <div id="automationLog" class="space-y-2">
+                    <div class="text-sm text-gray-600">Loading automation history...</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    loadAutomationHistory();
+}
+
+// Feedback & Reviews Panel
+async function showFeedbackPanel() {
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">⭐ Feedback & Reviews</h2>
+                <p class="text-gray-600">Manage review requests and patient feedback</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+                    <h3 class="font-semibold text-yellow-800 mb-2">Review Requests</h3>
+                    <p class="text-yellow-600 text-sm mb-4">Only sent to successful package completers</p>
+                    <button onclick="requestFeedbackDemo()" class="px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors">
+                        Request Demo
+                    </button>
+                </div>
+                
+                <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                    <h3 class="font-semibold text-indigo-800 mb-2">Feedback History</h3>
+                    <p class="text-indigo-600 text-sm mb-4">Track review requests and responses</p>
+                    <button onclick="loadFeedbackHistory()" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors">
+                        Refresh History
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Feedback Activity</h3>
+                <div id="feedbackLog" class="space-y-2">
+                    <div class="text-sm text-gray-600">Loading feedback history...</div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    loadFeedbackHistory();
+}
+
+// Trigger functions
+async function triggerPreVisitDemo() {
+    try {
+        const response = await fetch('/api/patients/100/trigger-automation', {
+            method: 'POST'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Pre-visit automation triggered for Emily Johnson!', 'success');
+            loadAutomationHistory();
+        }
+    } catch (error) {
+        showNotification('Error triggering automation', 'error');
+    }
+}
+
+async function triggerNudgeSystem() {
+    try {
+        const response = await fetch('/api/nudge/trigger', {
+            method: 'POST'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(`Nudge system executed: ${result.results.low_sessions} low session warnings, ${result.results.renewals} renewals, ${result.results.dormant} dormant reactivations`, 'success');
+            loadAutomationHistory();
+        }
+    } catch (error) {
+        showNotification('Error running nudge system', 'error');
+    }
+}
+
+async function requestFeedbackDemo() {
+    try {
+        const response = await fetch('/api/patients/100/request-feedback', {
+            method: 'POST'
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification('Feedback request sent to Emily Johnson!', 'success');
+            loadFeedbackHistory();
+        } else {
+            showNotification(result.error, 'error');
+        }
+    } catch (error) {
+        showNotification('Error requesting feedback', 'error');
+    }
+}
+
+async function loadAutomationHistory() {
+    try {
+        const response = await fetch('/api/nudge/history');
+        const emails = await response.json();
+        
+        const logDiv = document.getElementById('automationLog');
+        if (emails.length === 0) {
+            logDiv.innerHTML = '<div class="text-sm text-gray-500">No automation activity yet</div>';
+            return;
+        }
+        
+        logDiv.innerHTML = emails.slice(0, 10).map(email => `
+            <div class="flex justify-between items-center p-2 bg-white rounded border">
+                <div>
+                    <span class="font-medium">${email.email_type.replace(/_/g, ' ').toUpperCase()}</span>
+                    <span class="text-gray-500 text-sm">- Patient ID: ${email.patient_id}</span>
+                </div>
+                <span class="text-xs text-gray-400">${new Date(email.sent_at).toLocaleString()}</span>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading automation history:', error);
+    }
+}
+
+async function loadFeedbackHistory() {
+    try {
+        const response = await fetch('/api/nudge/history');
+        const emails = await response.json();
+        
+        const feedbackEmails = emails.filter(email => email.email_type === 'feedback_request');
+        
+        const logDiv = document.getElementById('feedbackLog');
+        if (feedbackEmails.length === 0) {
+            logDiv.innerHTML = '<div class="text-sm text-gray-500">No feedback requests sent yet</div>';
+            return;
+        }
+        
+        logDiv.innerHTML = feedbackEmails.map(email => `
+            <div class="flex justify-between items-center p-2 bg-white rounded border">
+                <div>
+                    <span class="font-medium">Review Request</span>
+                    <span class="text-gray-500 text-sm">- Patient ID: ${email.patient_id}</span>
+                </div>
+                <span class="text-xs text-gray-400">${new Date(email.sent_at).toLocaleString()}</span>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading feedback history:', error);
+    }
+}
+
+// Missing View Functions
+async function loadCalendarView() {
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">📅 Calendar</h2>
+                <p class="text-gray-600">Manage appointments and scheduling</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500">Calendar functionality coming soon...</p>
+            </div>
+        </div>
+    `;
+}
+
+async function loadSubscriptionsView() {
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">🔄 Subscriptions</h2>
+                <p class="text-gray-600">Manage recurring billing and subscriptions</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500">Subscription management coming soon...</p>
+            </div>
+        </div>
+    `;
+}
+
+async function loadInvoicesView() {
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">📄 Invoices</h2>
+                <p class="text-gray-600">Manage billing and invoices</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500">Invoice management coming soon...</p>
+            </div>
+        </div>
+    `;
+}
+
+async function loadReportsView() {
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">📊 Reports</h2>
+                <p class="text-gray-600">Analytics and business intelligence</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500">Reports and analytics coming soon...</p>
+            </div>
+        </div>
+    `;
+}
+
+async function loadTemplatesView() {
+    document.getElementById('app').innerHTML = `
+        <div class="p-6">
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900">📋 Templates</h2>
+                <p class="text-gray-600">Treatment plan templates</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <p class="text-gray-500">Template management coming soon...</p>
+            </div>
+        </div>
+    `;
+}
+
+async function loadPackagesView() {
+    try {
+        console.log('📦 Loading packages view...');
+        
+        const mainContent = document.getElementById('app');
+        if (!mainContent) {
+            console.error('❌ No app element found');
+            return;
+        }
+        
+        const response = await fetch('/api/packages');
+        if (!response.ok) {
+            throw new Error(`Failed to load packages: ${response.status}`);
+        }
+        let packages = await response.json();
+        
+        // Add fallback data if empty or undefined
+        if (!packages || packages.length === 0) {
+            packages = [
+                {
+                    id: 1,
+                    name: 'Starter Package',
+                    description: 'Perfect for beginners - includes 4 treatment sessions',
+                    number_of_sessions: 4,
+                    price: 299.99
+                },
+                {
+                    id: 2,
+                    name: 'Standard Package', 
+                    description: 'Most popular choice - 8 comprehensive sessions',
+                    number_of_sessions: 8,
+                    price: 549.99
+                },
+                {
+                    id: 3,
+                    name: 'Premium Package',
+                    description: 'Complete treatment plan with 12 sessions',
+                    number_of_sessions: 12,
+                    price: 799.99
+                }
+            ];
+        }
+        
+        mainContent.innerHTML = `
+            <div class="packages-management">
+                <div class="header-section mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Package Management</h1>
+                    <p class="text-gray-600">Manage treatment packages and subscriptions</p>
+                </div>
+                
+                <div class="packages-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    ${packages.map(pkg => `
+                        <div class="package-card bg-white rounded-lg shadow-md p-6 border">
+                            <h3 class="text-xl font-semibold text-gray-800 mb-2">${safeText(pkg.name, 'Treatment Package')}</h3>
+                            <p class="text-gray-600 mb-4">${safeText(pkg.description, 'Comprehensive treatment plan designed for your needs')}</p>
+                            <div class="package-details mb-4">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm text-gray-500">Sessions:</span>
+                                    <span class="font-medium">${safeNumber(pkg.number_of_sessions, 8)}</span>
+                                </div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-sm text-gray-500">Price:</span>
+                                    <span class="font-bold text-green-600">${safeCurrency(pkg.price || 299)}</span>
+                                </div>
+                            </div>
+                            <button onclick="subscribeToPackage(${pkg.id || 1})" 
+                                    class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors">
+                                Subscribe Now
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+    } catch (error) {
+        console.error('❌ Packages loading error:', error);
+        const mainContent = document.getElementById('app');
+        if (mainContent) {
+            mainContent.innerHTML = `
+                <div class="error-message">
+                    <h2>Error Loading Packages</h2>
+                    <p>Unable to load packages: ${error.message}</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Global function for subscribe button
+window.subscribeToPackage = function(packageId) {
+    alert(`Subscribing to package ${packageId}. This feature will be implemented with payment integration.`);
+};
+
+async function loadPreVisitView() {
+    try {
+        console.log('📋 Loading pre-visit checklist view...');
+        
+        const mainContent = document.getElementById('app');
+        if (!mainContent) {
+            console.error('❌ No app element found');
+            return;
+        }
+        
+        mainContent.innerHTML = `
+            <div class="pre-visit-checklist">
+                <div class="header-section mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Pre-Visit Checklist</h1>
+                    <p class="text-gray-600">Complete this checklist before your appointment</p>
+                </div>
+                
+                <div class="checklist-form bg-white rounded-lg shadow-md p-6">
+                    <form id="pre-visit-form">
+                        <div class="section mb-6">
+                            <h3 class="text-lg font-semibold mb-4 text-blue-800">Personal Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <input type="text" id="patient-name" placeholder="Full Name" value="John Smith" class="border rounded px-3 py-2" required>
+                                <input type="email" id="patient-email" placeholder="Email Address" value="john.smith@email.com" class="border rounded px-3 py-2" required>
+                                <input type="tel" id="patient-phone" placeholder="Phone Number" value="555-0123" class="border rounded px-3 py-2" required>
+                                <input type="date" id="appointment-date" value="2024-09-25" class="border rounded px-3 py-2" required>
+                            </div>
+                        </div>
+                        
+                        <div class="section mb-6">
+                            <h3 class="text-lg font-semibold mb-4 text-blue-800">Current Symptoms</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Pain Level (1-10)</label>
+                                    <input type="range" id="pain-level" min="1" max="10" value="6" 
+                                           class="w-full" oninput="document.getElementById('pain-value').textContent = this.value">
+                                    <div class="text-center mt-1">Current: <span id="pain-value">6</span></div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Primary Complaint</label>
+                                    <select id="primary-complaint" class="w-full border rounded px-3 py-2">
+                                        <option value="">Select complaint</option>
+                                        <option value="back-pain" selected>Back Pain</option>
+                                        <option value="neck-pain">Neck Pain</option>
+                                        <option value="shoulder-pain">Shoulder Pain</option>
+                                        <option value="knee-pain">Knee Pain</option>
+                                        <option value="hip-pain">Hip Pain</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto">
+                                Submit Pre-Visit Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        `;
+        
+        // Add form handler
+        setTimeout(() => {
+            const form = document.getElementById('pre-visit-form');
+            if (form) {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    alert('Pre-visit form submitted successfully!');
+                });
+            }
+        }, 100);
+        
+    } catch (error) {
+        console.error('❌ Pre-visit loading error:', error);
+        const mainContent = document.getElementById('app');
+        if (mainContent) {
+            mainContent.innerHTML = `
+                <div class="error-message">
+                    <h2>Error Loading Pre-Visit Checklist</h2>
+                    <p>Unable to load pre-visit form: ${error.message}</p>
+                </div>
+            `;
+        }
     }
 }

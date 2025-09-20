@@ -2,11 +2,15 @@
   "name": "posture-perfect-crm",
   "version": "2.0.0",
   "description": "Complete CRM system for Posture Perfect physical therapy practice with Stripe integration",
-  "main": "server.js",
+  "main": "api/index.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node server-final-working.js",
+    "dev": "nodemon server-final-working.js",
+    "build": "echo 'Build complete'",
+    "vercel-build": "echo 'Vercel build complete'"
+  },
     "start:windows": "node server-windows.js",
-    "dev": "nodemon server.js",
+    "dev": "node server-production.js",
     "dev:windows": "nodemon server-windows.js",
     "build": "echo 'Build complete'",
     "test": "echo \"Error: no test specified\" && exit 1",

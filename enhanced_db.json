@@ -1,0 +1,100 @@
+{
+  "contacts": [
+    {
+      "id": 100,
+      "first_name": "Emily",
+      "last_name": "Johnson",
+      "email": "emily.johnson@email.com",
+      "phone": "555-0199",
+      "primary_complaint": "Chronic lower back pain",
+      "status": "Client",
+      "pre_visit_status": {
+        "intake_forms_sent": true,
+        "intake_forms_completed": true,
+        "cc_on_file": true,
+        "first_appointment_scheduled": true
+      },
+      "created_at": "2024-09-19T10:00:00Z"
+    }
+  ],
+  "packages": [
+    {
+      "id": 1,
+      "name": "6-Session Starter Package",
+      "number_of_sessions": 6,
+      "price": 450,
+      "description": "Perfect for addressing specific posture issues"
+    },
+    {
+      "id": 2,
+      "name": "12-Session Complete Package",
+      "number_of_sessions": 12,
+      "price": 800,
+      "description": "Comprehensive posture correction program"
+    },
+    {
+      "id": 3,
+      "name": "24-Session Premium Package",
+      "number_of_sessions": 24,
+      "price": 1400,
+      "description": "Full transformation program with ongoing support"
+    }
+  ],
+  "patient_packages": [
+    {
+      "id": 1,
+      "patient_id": 100,
+      "package_id": 2,
+      "purchase_date": "2024-09-19T12:00:00Z",
+      "sessions_remaining": 10,
+      "is_active": false,
+      "total_sessions": 12,
+      "sessions_used": 2
+    },
+    {
+      "id": 2,
+      "patient_id": 100,
+      "package_id": 1,
+      "purchase_date": "2025-09-19T22:27:08.043Z",
+      "sessions_remaining": 5,
+      "total_sessions": 6,
+      "sessions_used": 1,
+      "is_active": true
+    }
+  ],
+  "appointments": [
+    {
+      "id": 1,
+      "patient_id": 100,
+      "patient_package_id": 1,
+      "appointment_date": "2024-09-20T14:00:00Z",
+      "status": "completed",
+      "session_type": "Initial Assessment"
+    },
+    {
+      "id": 2,
+      "patient_id": 100,
+      "patient_package_id": 1,
+      "appointment_date": "2024-09-22T14:00:00Z",
+      "status": "completed",
+      "session_type": "Treatment Session"
+    }
+  ],
+  "onboarding_tasks": [],
+  "automated_emails": [],
+  "intake_forms": [],
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password_hash": "$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi",
+      "name": "Admin User",
+      "role": "admin"
+    }
+  ],
+  "patient_logins": [],
+  "patient_assessments": [],
+  "patient_sessions": [],
+  "tasks": [],
+  "invoices": []
+}
