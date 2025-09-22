@@ -415,7 +415,7 @@ async function loadCampaignsView() {
         const doc = parser.parseFromString(html, 'text/html');
         const mainContent = doc.querySelector('main') || doc.querySelector('.container') || doc.body;
         
-        document.getElementById('main-content').innerHTML = mainContent.innerHTML;
+        document.getElementById('app').innerHTML = mainContent.innerHTML;
         
         // Load campaigns.js script if it exists
         const script = document.createElement('script');
@@ -434,7 +434,7 @@ async function loadCampaignsView() {
         
     } catch (error) {
         console.error('❌ Campaigns loading error:', error);
-        document.getElementById('main-content').innerHTML = `
+        document.getElementById('app').innerHTML = `
             <div class="error-message">
                 <h2>Error Loading Campaigns</h2>
                 <p>Unable to load campaigns view: ${error.message}</p>
@@ -793,22 +793,22 @@ async function requestFeedbackDemo() {
 
 async function loadAutomationHistory() {
     try {
-        const response = await fetch('/api/nudge/history');
-        const emails = await response.json();
+        const response = await fetch('/api/automation/history');
+        const history = await response.json();
         
         const logDiv = document.getElementById('automationLog');
-        if (emails.length === 0) {
+        if (history.length === 0) {
             logDiv.innerHTML = '<div class="text-sm text-gray-500">No automation activity yet</div>';
             return;
         }
         
-        logDiv.innerHTML = emails.slice(0, 10).map(email => `
+        logDiv.innerHTML = history.slice(0, 10).map(item => `
             <div class="flex justify-between items-center p-2 bg-white rounded border">
                 <div>
-                    <span class="font-medium">${email.email_type.replace(/_/g, ' ').toUpperCase()}</span>
-                    <span class="text-gray-500 text-sm">- Patient ID: ${email.patient_id}</span>
+                    <span class="font-medium">${item.automation_type}</span>
+                    <span class="text-gray-500 text-sm">- ${item.first_name} ${item.last_name}</span>
                 </div>
-                <span class="text-xs text-gray-400">${new Date(email.sent_at).toLocaleString()}</span>
+                <span class="text-xs text-gray-400">${new Date(item.created_at).toLocaleString()}</span>
             </div>
         `).join('');
     } catch (error) {
@@ -859,17 +859,86 @@ async function loadCalendarView() {
 }
 
 async function loadSubscriptionsView() {
-    document.getElementById('app').innerHTML = `
-        <div class="p-6">
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold text-gray-900">🔄 Subscriptions</h2>
-                <p class="text-gray-600">Manage recurring billing and subscriptions</p>
+    const app = document.getElementById('app');
+    app.innerHTML = `<div class="p-6">Loading...</div>`;
+
+    // Fetch patients and plans
+    const [contacts, plans] = await Promise.all([
+        safeFetch('/api/contacts').catch(() => []),
+        safeFetch('/api/subscription-plans').catch(() => [])
+    ]);
+
+    // Build patient dropdown
+    const patientDropdown = `
+        <label class="block mb-4">
+            <span class="text-gray-700 font-medium">Select Patient:</span>
+            <select id="planPatientSelect" class="mt-1 w-full border rounded px-3 py-2">
+                <option value="">-- Select Patient --</option>
+                ${contacts.map(c => `<option value="${c.id}">${safeText(c.first_name)} ${safeText(c.last_name)} (${safeText(c.email)})</option>`).join('')}
+            </select>
+        </label>
+    `;
+
+    // Build plans list
+    const plansList = plans.map(plan => `
+        <div class="bg-white rounded-lg shadow-md p-6 border mb-4">
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">${safeText(plan.name, 'Subscription Plan')}</h3>
+            <p class="text-gray-600 mb-4">${safeText(plan.description, 'No description')}</p>
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-sm text-gray-500">Price:</span>
+                <span class="font-bold text-green-600">${safeCurrency(plan.price)}</span>
             </div>
-            <div class="bg-white rounded-lg shadow p-6">
-                <p class="text-gray-500">Subscription management coming soon...</p>
+            <div class="flex justify-between items-center mb-4">
+                <span class="text-sm text-gray-500">Interval:</span>
+                <span class="font-medium">${safeText(plan.billing_interval)}</span>
             </div>
+            <button 
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors subscribe-plan-btn"
+                data-plan-id="${plan.id}">
+                Subscribe Selected Patient
+            </button>
+        </div>
+    `).join('');
+
+    app.innerHTML = `
+        <div class="subscriptions-management">
+            <div class="header-section mb-6">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Subscription Management</h1>
+                <p class="text-gray-600">Subscribe patients to plans</p>
+            </div>
+            <div class="mb-6">${patientDropdown}</div>
+            <div>${plansList}</div>
+            <div id="planSubscribeMsg" class="mt-6"></div>
         </div>
     `;
+
+    // Add event listeners for subscribe buttons
+    document.querySelectorAll('.subscribe-plan-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const userId = document.getElementById('planPatientSelect').value;
+            const planId = this.getAttribute('data-plan-id');
+            const msgDiv = document.getElementById('planSubscribeMsg');
+            msgDiv.textContent = '';
+            if (!userId) {
+                msgDiv.innerHTML = `<div class="text-red-600 font-medium">Please select a patient first.</div>`;
+                return;
+            }
+            // Call backend to subscribe
+            try {
+                const res = await safeFetch('/api/subscriptions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contact_id: userId,
+                        plan_id: planId
+                    })
+                });
+                msgDiv.innerHTML = `<div class="text-green-600 font-medium">Patient subscribed to plan successfully!</div>`;
+            } catch (err) {
+                msgDiv.innerHTML = `<div class="text-red-600 font-medium">Error subscribing: ${err.message}</div>`;
+            }
+        });
+    });
 }
 
 async function loadInvoicesView() {
@@ -917,55 +986,46 @@ async function loadTemplatesView() {
 async function loadPackagesView() {
     try {
         console.log('📦 Loading packages view...');
-        
         const mainContent = document.getElementById('app');
         if (!mainContent) {
             console.error('❌ No app element found');
             return;
         }
-        
-        const response = await fetch('/api/packages');
-        if (!response.ok) {
-            throw new Error(`Failed to load packages: ${response.status}`);
-        }
-        let packages = await response.json();
-        
-        // Add fallback data if empty or undefined
-        if (!packages || packages.length === 0) {
-            packages = [
-                {
-                    id: 1,
-                    name: 'Starter Package',
-                    description: 'Perfect for beginners - includes 4 treatment sessions',
-                    number_of_sessions: 4,
-                    price: 299.99
-                },
-                {
-                    id: 2,
-                    name: 'Standard Package', 
-                    description: 'Most popular choice - 8 comprehensive sessions',
-                    number_of_sessions: 8,
-                    price: 549.99
-                },
-                {
-                    id: 3,
-                    name: 'Premium Package',
-                    description: 'Complete treatment plan with 12 sessions',
-                    number_of_sessions: 12,
-                    price: 799.99
-                }
-            ];
-        }
-        
+
+        // Fetch packages and contacts
+        const [packages, contacts] = await Promise.all([
+            safeFetch('/api/packages').catch(() => []),
+            safeFetch('/api/contacts').catch(() => [])
+        ]);
+
+        // Fallback demo data if needed
+        const pkgList = (packages && packages.length) ? packages : [
+            { id: 1, name: 'Starter Package', description: 'Perfect for beginners - includes 4 treatment sessions', number_of_sessions: 4, price: 299.99 },
+            { id: 2, name: 'Standard Package', description: 'Most popular choice - 8 comprehensive sessions', number_of_sessions: 8, price: 549.99 },
+            { id: 3, name: 'Premium Package', description: 'Complete treatment plan with 12 sessions', number_of_sessions: 12, price: 799.99 }
+        ];
+
+        // Build user dropdown
+        const userDropdown = `
+            <label class="block mb-4">
+                <span class="text-gray-700 font-medium">Select Patient to Subscribe:</span>
+                <select id="packageUserSelect" class="mt-1 w-full border rounded px-3 py-2">
+                    <option value="">-- Select Patient --</option>
+                    ${contacts.map(c => `<option value="${c.id}">${safeText(c.first_name)} ${safeText(c.last_name)} (${safeText(c.email)})</option>`).join('')}
+                </select>
+            </label>
+        `;
+
+        // Render packages and dropdown
         mainContent.innerHTML = `
             <div class="packages-management">
                 <div class="header-section mb-6">
                     <h1 class="text-2xl font-bold text-gray-800 mb-2">Package Management</h1>
                     <p class="text-gray-600">Manage treatment packages and subscriptions</p>
                 </div>
-                
+                <div class="mb-6">${userDropdown}</div>
                 <div class="packages-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    ${packages.map(pkg => `
+                    ${pkgList.map(pkg => `
                         <div class="package-card bg-white rounded-lg shadow-md p-6 border">
                             <h3 class="text-xl font-semibold text-gray-800 mb-2">${safeText(pkg.name, 'Treatment Package')}</h3>
                             <p class="text-gray-600 mb-4">${safeText(pkg.description, 'Comprehensive treatment plan designed for your needs')}</p>
@@ -979,16 +1039,46 @@ async function loadPackagesView() {
                                     <span class="font-bold text-green-600">${safeCurrency(pkg.price || 299)}</span>
                                 </div>
                             </div>
-                            <button onclick="subscribeToPackage(${pkg.id || 1})" 
-                                    class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors">
-                                Subscribe Now
+                            <button 
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors subscribe-btn"
+                                data-package-id="${pkg.id}">
+                                Subscribe Selected Patient
                             </button>
                         </div>
                     `).join('')}
                 </div>
+                <div id="packageSubscribeMsg" class="mt-6"></div>
             </div>
         `;
-        
+
+        // Add event listeners for subscribe buttons
+        document.querySelectorAll('.subscribe-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const userId = document.getElementById('packageUserSelect').value;
+                const packageId = this.getAttribute('data-package-id');
+                const msgDiv = document.getElementById('packageSubscribeMsg');
+                msgDiv.textContent = '';
+                if (!userId) {
+                    msgDiv.innerHTML = `<div class="text-red-600 font-medium">Please select a patient first.</div>`;
+                    return;
+                }
+                // Call backend to subscribe
+                try {
+                    const res = await safeFetch('/api/subscriptions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contact_id: userId,
+                            package_id: packageId
+                        })
+                    });
+                    msgDiv.innerHTML = `<div class="text-green-600 font-medium">Patient subscribed to package successfully!</div>`;
+                } catch (err) {
+                    msgDiv.innerHTML = `<div class="text-red-600 font-medium">Error subscribing: ${err.message}</div>`;
+                }
+            });
+        });
+
     } catch (error) {
         console.error('❌ Packages loading error:', error);
         const mainContent = document.getElementById('app');
@@ -1009,89 +1099,230 @@ window.subscribeToPackage = function(packageId) {
 };
 
 async function loadPreVisitView() {
-    try {
-        console.log('📋 Loading pre-visit checklist view...');
-        
-        const mainContent = document.getElementById('app');
-        if (!mainContent) {
-            console.error('❌ No app element found');
-            return;
-        }
-        
-        mainContent.innerHTML = `
-            <div class="pre-visit-checklist">
-                <div class="header-section mb-6">
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Pre-Visit Checklist</h1>
-                    <p class="text-gray-600">Complete this checklist before your appointment</p>
-                </div>
+    document.getElementById('app').innerHTML = `
+        <div class="container mx-auto px-4 py-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Pre-Visit Checklist</h2>
                 
-                <div class="checklist-form bg-white rounded-lg shadow-md p-6">
-                    <form id="pre-visit-form">
-                        <div class="section mb-6">
-                            <h3 class="text-lg font-semibold mb-4 text-blue-800">Personal Information</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <input type="text" id="patient-name" placeholder="Full Name" value="John Smith" class="border rounded px-3 py-2" required>
-                                <input type="email" id="patient-email" placeholder="Email Address" value="john.smith@email.com" class="border rounded px-3 py-2" required>
-                                <input type="tel" id="patient-phone" placeholder="Phone Number" value="555-0123" class="border rounded px-3 py-2" required>
-                                <input type="date" id="appointment-date" value="2024-09-25" class="border rounded px-3 py-2" required>
+                <!-- Patient Selector -->
+                <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-semibold text-blue-800">Select Patient</h3>
+                    <select id="patientSelect" class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md">
+                        <option value="">Select a patient...</option>
+                    </select>
+                </div>
+
+                <!-- Patient Info -->
+                <div id="patientInfo" class="mb-6 p-4 bg-blue-50 rounded-lg" style="display:none;">
+                    <h3 class="font-semibold text-blue-800">Patient Information</h3>
+                    <p id="patientName" class="text-blue-600"></p>
+                    <p id="patientEmail" class="text-blue-600"></p>
+                </div>
+
+                <!-- Checklist Items -->
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 border rounded-lg" id="intakeFormsSent">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="intakeFormsIcon">
+                                <svg class="w-4 h-4 text-green-500 hidden" id="intakeFormsCheck" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Intake Forms Sent</h4>
+                                <p class="text-sm text-gray-600">Digital intake forms emailed to patient</p>
                             </div>
                         </div>
-                        
-                        <div class="section mb-6">
-                            <h3 class="text-lg font-semibold mb-4 text-blue-800">Current Symptoms</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">Pain Level (1-10)</label>
-                                    <input type="range" id="pain-level" min="1" max="10" value="6" 
-                                           class="w-full" oninput="document.getElementById('pain-value').textContent = this.value">
-                                    <div class="text-center mt-1">Current: <span id="pain-value">6</span></div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium mb-2">Primary Complaint</label>
-                                    <select id="primary-complaint" class="w-full border rounded px-3 py-2">
-                                        <option value="">Select complaint</option>
-                                        <option value="back-pain" selected>Back Pain</option>
-                                        <option value="neck-pain">Neck Pain</option>
-                                        <option value="shoulder-pain">Shoulder Pain</option>
-                                        <option value="knee-pain">Knee Pain</option>
-                                        <option value="hip-pain">Hip Pain</option>
-                                        <option value="other">Other</option>
-                                    </select>
-                                </div>
+                        <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onclick="triggerIntakeForms()">
+                            Send Forms
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between p-4 border rounded-lg" id="intakeFormsCompleted">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="intakeCompletedIcon">
+                                <svg class="w-4 h-4 text-green-500 hidden" id="intakeCompletedCheck" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Intake Forms Completed</h4>
+                                <p class="text-sm text-gray-600">Patient has submitted intake forms</p>
                             </div>
                         </div>
-                        
-                        <div class="form-actions">
-                            <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors w-full md:w-auto">
-                                Submit Pre-Visit Form
-                            </button>
+                        <span class="text-sm text-gray-500">Waiting for patient</span>
+                    </div>
+                    <div class="flex items-center justify-between p-4 border rounded-lg" id="ccOnFile">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="ccIcon">
+                                <svg class="w-4 h-4 text-green-500 hidden" id="ccCheck" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Credit Card on File</h4>
+                                <p class="text-sm text-gray-600">Collect payment method for future sessions</p>
+                            </div>
                         </div>
-                    </form>
+                        <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700" onclick="markCCComplete()">
+                            Mark Complete
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between p-4 border rounded-lg" id="firstAppointment">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 rounded-full border-2 mr-3 flex items-center justify-center" id="appointmentIcon">
+                                <svg class="w-4 h-4 text-green-500 hidden" id="appointmentCheck" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">First Appointment Scheduled</h4>
+                                <p class="text-sm text-gray-600">Initial assessment appointment booked</p>
+                            </div>
+                        </div>
+                        <button class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700" onclick="scheduleAppointment()">
+                            Schedule
+                        </button>
+                    </div>
+                </div>
+                <div id="checklistActions" class="mt-6 flex space-x-3"></div>
+                <div class="mt-8">
+                    <h3 class="text-lg font-semibold mb-4">Onboarding Tasks</h3>
+                    <div id="tasksList" class="space-y-2"></div>
                 </div>
             </div>
-        `;
-        
-        // Add form handler
-        setTimeout(() => {
-            const form = document.getElementById('pre-visit-form');
-            if (form) {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    alert('Pre-visit form submitted successfully!');
-                });
+        </div>
+    `;
+
+    // JS logic for dropdown, checklist, etc.
+    let currentPatientId = null;
+    let patientsList = [];
+
+    async function loadPatientsDropdown() {
+        const response = await fetch('/api/contacts');
+        patientsList = await response.json();
+        const select = document.getElementById('patientSelect');
+        select.innerHTML = '<option value="">Select a patient...</option>' +
+            patientsList.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name} (${p.email})</option>`).join('');
+        select.onchange = function() {
+            currentPatientId = this.value;
+            if (currentPatientId) {
+                loadPreVisitChecklist();
+            } else {
+                document.getElementById('patientInfo').style.display = 'none';
+                document.getElementById('checklistActions').innerHTML = '';
+                document.getElementById('tasksList').innerHTML = '';
             }
-        }, 100);
-        
-    } catch (error) {
-        console.error('❌ Pre-visit loading error:', error);
-        const mainContent = document.getElementById('app');
-        if (mainContent) {
-            mainContent.innerHTML = `
-                <div class="error-message">
-                    <h2>Error Loading Pre-Visit Checklist</h2>
-                    <p>Unable to load pre-visit form: ${error.message}</p>
+        };
+    }
+
+    async function loadPreVisitChecklist() {
+        if (!currentPatientId) return;
+        try {
+            const response = await fetch(`/api/patients/${currentPatientId}/pre-visit-checklist`);
+            const data = await response.json();
+
+            document.getElementById('patientInfo').style.display = '';
+            document.getElementById('patientName').textContent = `${data.patient.first_name} ${data.patient.last_name}`;
+            document.getElementById('patientEmail').textContent = data.patient.email;
+
+            updateChecklistUI(data.pre_visit_status);
+            loadTasks(data.tasks);
+            showChecklistActions(data.pre_visit_status);
+        } catch (error) {
+            console.error('Error loading checklist:', error);
+        }
+    }
+
+    function updateChecklistUI(status) {
+        updateCheckItem('intakeFormsSent', status.intake_forms_sent);
+        updateCheckItem('intakeFormsCompleted', status.intake_forms_completed);
+        updateCheckItem('ccOnFile', status.cc_on_file);
+        updateCheckItem('firstAppointment', status.first_appointment_scheduled);
+    }
+
+    function updateCheckItem(itemId, completed) {
+        const item = document.getElementById(itemId);
+        const icon = item.querySelector('[id$="Icon"]');
+        const check = item.querySelector('[id$="Check"]');
+        if (completed) {
+            icon.classList.add('bg-green-500', 'border-green-500');
+            check.classList.remove('hidden');
+            item.classList.add('bg-green-50');
+        } else {
+            icon.classList.remove('bg-green-500', 'border-green-500');
+            icon.classList.add('border-gray-300');
+            check.classList.add('hidden');
+            item.classList.remove('bg-green-50');
+        }
+    }
+
+    function loadTasks(tasks) {
+        const tasksList = document.getElementById('tasksList');
+        tasksList.innerHTML = '';
+        tasks.forEach(task => {
+            const taskDiv = document.createElement('div');
+            taskDiv.className = `p-3 border rounded ${task.status === 'completed' ? 'bg-green-50' : 'bg-yellow-50'}`;
+            taskDiv.innerHTML = `
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="font-medium">${task.task_type.replace(/_/g, ' ').toUpperCase()}</span>
+                        <p class="text-sm text-gray-600">${task.notes}</p>
+                    </div>
+                    <span class="px-2 py-1 text-xs rounded ${task.status === 'completed' ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'}">
+                        ${task.status}
+                    </span>
                 </div>
+            `;
+            tasksList.appendChild(taskDiv);
+        });
+    }
+
+    function showChecklistActions(status) {
+        const allComplete = status.intake_forms_sent && status.intake_forms_completed && status.cc_on_file && status.first_appointment_scheduled;
+        const actionsDiv = document.getElementById('checklistActions');
+        actionsDiv.innerHTML = '';
+        if (allComplete) {
+            actionsDiv.innerHTML = `
+                <button class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600" onclick="editChecklist()">Edit</button>
+                <button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" onclick="startOverChecklist()">Start Over</button>
             `;
         }
     }
+
+    window.editChecklist = function() {
+        alert('Edit checklist feature coming soon!');
+    };
+    window.startOverChecklist = function() {
+        if (confirm('Are you sure you want to start over? This will reset the checklist.')) {
+            fetch(`/api/patients/${currentPatientId}/pre-visit-checklist/reset`, { method: 'POST' })
+                .then(res => res.json())
+                .then(() => loadPreVisitChecklist());
+        }
+    };
+
+    window.triggerIntakeForms = async function() {
+        try {
+            const response = await fetch(`/api/patients/${currentPatientId}/trigger-automation`, {
+                method: 'POST'
+            });
+            const result = await response.json();
+            if (result.success) {
+                alert('Intake forms sent successfully!');
+                loadPreVisitChecklist();
+            }
+        } catch (error) {
+            console.error('Error triggering intake forms:', error);
+        }
+    };
+
+    window.markCCComplete = async function() {
+        alert('Credit card collection feature would be implemented here');
+    };
+
+    window.scheduleAppointment = function() {
+        window.location.href = `/calendar.html?patientId=${currentPatientId}`;
+    };
+
+    // Load patients on view load
+    loadPatientsDropdown();
 }

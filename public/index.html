@@ -23,13 +23,13 @@
 </head>
 <body class="bg-gray-50">
     <!-- Sidebar Navigation -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg">
-        <div class="flex items-center justify-center h-16 bg-primary">
+    <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg" style="display: flex; flex-direction: column; height: 100vh;">
+        <div class="flex items-center justify-center h-16 bg-primary flex-shrink-0">
             <img src="https://sa1s3optim.patientpop.com/assets/images/provider/photos/2754856.png" alt="Logo" class="h-8 w-auto">
             <span class="ml-3 text-white font-bold text-lg">Posture Perfect</span>
         </div>
         
-        <nav class="mt-8">
+        <nav class="mt-8 flex-1 overflow-y-auto" style="overflow-y: scroll; max-height: calc(100vh - 80px); padding-bottom: 20px;">
             <div class="px-4 space-y-2">
                 <a href="#/dashboard" class="nav-item flex items-center px-4 py-3 text-primary bg-gray-100 rounded-lg">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,8 +191,8 @@
     <script src="app.js"></script>
     <script src="calendar.js"></script>
     <script src="invoices.js"></script>
-    <script src="subscriptions.js"></script>
-    <script src="reports.js"></script>
+    <script src="subscriptions-v2.js"></script>
+    <script src="reports-v2.js"></script>
     <script src="templates.js"></script>
     <script src="campaigns.js"></script>
     <script src="admin-dashboard.js"></script>

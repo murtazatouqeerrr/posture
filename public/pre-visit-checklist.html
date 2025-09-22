@@ -6,13 +6,21 @@
     <title>Pre-Visit Checklist - Posture Perfect CRM</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50" id="app">
     <div class="container mx-auto px-4 py-8">
         <div class="bg-white rounded-lg shadow-md p-6">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Pre-Visit Checklist</h2>
             
+            <!-- Patient Selector -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
+                <h3 class="font-semibold text-blue-800">Select Patient</h3>
+                <select id="patientSelect" class="w-full mt-2 px-3 py-2 border border-gray-300 rounded-md">
+                    <option value="">Select a patient...</option>
+                </select>
+            </div>
+
             <!-- Patient Info -->
-            <div id="patientInfo" class="mb-6 p-4 bg-blue-50 rounded-lg">
+            <div id="patientInfo" class="mb-6 p-4 bg-blue-50 rounded-lg" style="display:none;">
                 <h3 class="font-semibold text-blue-800">Patient Information</h3>
                 <p id="patientName" class="text-blue-600"></p>
                 <p id="patientEmail" class="text-blue-600"></p>
@@ -91,6 +99,9 @@
                 </div>
             </div>
 
+            <!-- Checklist Actions (Edit/Start Over) -->
+            <div id="checklistActions" class="mt-6 flex space-x-3"></div>
+
             <!-- Tasks List -->
             <div class="mt-8">
                 <h3 class="text-lg font-semibold mb-4">Onboarding Tasks</h3>
@@ -103,40 +114,50 @@
 
     <script>
         let currentPatientId = null;
+        let patientsList = [];
 
-        // Get patient ID from URL parameters
-        function getPatientId() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('patientId');
+        async function loadPatientsDropdown() {
+            const response = await fetch('/api/contacts');
+            patientsList = await response.json();
+            const select = document.getElementById('patientSelect');
+            select.innerHTML = '<option value="">Select a patient...</option>' +
+                patientsList.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name} (${p.email})</option>`).join('');
+            select.onchange = function() {
+                currentPatientId = this.value;
+                if (currentPatientId) {
+                    loadPreVisitChecklist();
+                } else {
+                    document.getElementById('patientInfo').style.display = 'none';
+                    document.getElementById('checklistActions').innerHTML = '';
+                    document.getElementById('tasksList').innerHTML = '';
+                }
+            };
         }
 
-        // Load patient data and checklist
         async function loadPreVisitChecklist() {
-            currentPatientId = getPatientId();
-            if (!currentPatientId) {
-                alert('No patient ID provided');
-                return;
-            }
-
+            if (!currentPatientId) return;
             try {
                 const response = await fetch(`/api/patients/${currentPatientId}/pre-visit-checklist`);
                 const data = await response.json();
-                
-                // Update patient info
+
+                // Show patient info
+                document.getElementById('patientInfo').style.display = '';
                 document.getElementById('patientName').textContent = `${data.patient.first_name} ${data.patient.last_name}`;
                 document.getElementById('patientEmail').textContent = data.patient.email;
-                
+
                 // Update checklist status
                 updateChecklistUI(data.pre_visit_status);
-                
+
                 // Load tasks
                 loadTasks(data.tasks);
+
+                // Show edit/start over options if already submitted
+                showChecklistActions(data.pre_visit_status);
             } catch (error) {
                 console.error('Error loading checklist:', error);
             }
         }
 
-        // Update checklist UI based on status
         function updateChecklistUI(status) {
             updateCheckItem('intakeFormsSent', status.intake_forms_sent);
             updateCheckItem('intakeFormsCompleted', status.intake_forms_completed);
@@ -144,27 +165,25 @@
             updateCheckItem('firstAppointment', status.first_appointment_scheduled);
         }
 
-        // Update individual check item
         function updateCheckItem(itemId, completed) {
             const item = document.getElementById(itemId);
             const icon = item.querySelector('[id$="Icon"]');
             const check = item.querySelector('[id$="Check"]');
-            
             if (completed) {
                 icon.classList.add('bg-green-500', 'border-green-500');
                 check.classList.remove('hidden');
                 item.classList.add('bg-green-50');
             } else {
+                icon.classList.remove('bg-green-500', 'border-green-500');
                 icon.classList.add('border-gray-300');
                 check.classList.add('hidden');
+                item.classList.remove('bg-green-50');
             }
         }
 
-        // Load tasks
         function loadTasks(tasks) {
             const tasksList = document.getElementById('tasksList');
             tasksList.innerHTML = '';
-            
             tasks.forEach(task => {
                 const taskDiv = document.createElement('div');
                 taskDiv.className = `p-3 border rounded ${task.status === 'completed' ? 'bg-green-50' : 'bg-yellow-50'}`;
@@ -183,37 +202,72 @@
             });
         }
 
-        // Trigger intake forms
+        function showChecklistActions(status) {
+            const allComplete = status.intake_forms_sent && status.intake_forms_completed && status.cc_on_file && status.first_appointment_scheduled;
+            const actionsDiv = document.getElementById('checklistActions');
+            actionsDiv.innerHTML = '';
+            if (allComplete) {
+                actionsDiv.innerHTML = `
+                    <button class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600" onclick="editChecklist()">Edit</button>
+                    <button class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600" onclick="startOverChecklist()">Start Over</button>
+                `;
+            }
+        }
+
+        function editChecklist() {
+            alert('Edit checklist feature coming soon!');
+        }
+        function startOverChecklist() {
+            if (confirm('Are you sure you want to start over? This will reset the checklist.')) {
+                fetch(`/api/patients/${currentPatientId}/pre-visit-checklist/reset`, { method: 'POST' })
+                    .then(res => res.json())
+                    .then(() => loadPreVisitChecklist());
+            }
+        }
+
         async function triggerIntakeForms() {
             try {
                 const response = await fetch(`/api/patients/${currentPatientId}/trigger-automation`, {
                     method: 'POST'
                 });
                 const result = await response.json();
-                
                 if (result.success) {
                     alert('Intake forms sent successfully!');
-                    loadPreVisitChecklist(); // Reload to update UI
+                    loadPreVisitChecklist();
                 }
             } catch (error) {
                 console.error('Error triggering intake forms:', error);
             }
         }
 
-        // Mark CC complete
         async function markCCComplete() {
-            // This would typically open a payment form or mark the task as complete
-            alert('Credit card collection feature would be implemented here');
+            if (!currentPatientId) {
+                alert('Please select a patient first');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/patients/${currentPatientId}/mark-cc-complete`, {
+                    method: 'POST'
+                });
+                const result = await response.json();
+                if (result.success) {
+                    alert('Credit card marked as complete!');
+                    loadPreVisitChecklist();
+                } else {
+                    alert('Error marking credit card complete');
+                }
+            } catch (error) {
+                console.error('Error marking CC complete:', error);
+                alert('Error marking credit card complete');
+            }
         }
 
-        // Schedule appointment
         function scheduleAppointment() {
-            // Redirect to appointment scheduling
-            window.location.href = `/appointments.html?patientId=${currentPatientId}`;
+            window.location.href = `/calendar.html?patientId=${currentPatientId}`;
         }
 
-        // Load data when page loads
-        document.addEventListener('DOMContentLoaded', loadPreVisitChecklist);
+        document.addEventListener('DOMContentLoaded', loadPatientsDropdown);
     </script>
 </body>
 </html>

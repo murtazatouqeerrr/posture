@@ -38,6 +38,14 @@
             </div>
         </div>
 
+        <!-- User Packages Overview -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold mb-4">All User Packages</h2>
+            <div id="userPackagesTable" class="overflow-x-auto">
+                <!-- User packages table will be loaded here -->
+            </div>
+        </div>
+
         <!-- Package Purchase History -->
         <div id="packageHistory" class="bg-white rounded-lg shadow-md p-6 hidden">
             <h2 class="text-xl font-semibold mb-4">Package History</h2>
@@ -69,30 +77,26 @@
 
         // Load patients and packages on page load
         document.addEventListener('DOMContentLoaded', function() {
-            loadPatients();
+            loadPatientsDropdown();
             loadAvailablePackages();
+            loadUserPackages();
         });
 
-        // Load patients for selection
-        async function loadPatients() {
+        // Load patients for dropdown
+        async function loadPatientsDropdown() {
             try {
                 const response = await fetch('/api/contacts');
                 const patients = await response.json();
                 
                 const select = document.getElementById('patientSelect');
-                select.innerHTML = '<option value="">Choose a patient...</option>';
-                
-                patients.forEach(patient => {
-                    const option = document.createElement('option');
-                    option.value = patient.id;
-                    option.textContent = `${patient.first_name} ${patient.last_name}`;
-                    select.appendChild(option);
-                });
+                select.innerHTML = '<option value="">Choose a patient...</option>' +
+                    patients.map(p => `<option value="${p.id}">${p.first_name} ${p.last_name}</option>`).join('');
             } catch (error) {
                 console.error('Error loading patients:', error);
             }
         }
 
+        // Load patients for selection
         // Load available packages
         async function loadAvailablePackages() {
             try {
@@ -140,7 +144,7 @@
             if (!patientId) {
                 document.getElementById('patientPackageStatus').classList.add('hidden');
                 document.getElementById('packageHistory').classList.add('hidden');
-                loadAvailablePackages(); // Refresh to disable buttons
+                loadAvailablePackages();
                 return;
             }
 
@@ -148,36 +152,98 @@
                 const response = await fetch(`/api/patients/${patientId}/packages`);
                 const packages = await response.json();
                 
-                // Show current active package
-                const activePackage = packages.find(p => p.is_active);
-                if (activePackage) {
-                    showCurrentPackage(activePackage);
+                const statusDiv = document.getElementById('patientPackageStatus');
+                const infoDiv = document.getElementById('currentPackageInfo');
+                
+                if (packages.length > 0) {
+                    statusDiv.classList.remove('hidden');
+                    infoDiv.innerHTML = packages.map(pkg => `
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <h3 class="font-semibold text-blue-800">${pkg.name}</h3>
+                            <p class="text-sm text-gray-600">${pkg.description}</p>
+                            <div class="mt-2">
+                                <span class="text-lg font-bold text-green-600">${pkg.remaining_sessions}</span>
+                                <span class="text-sm text-gray-500">/ ${pkg.total_sessions} sessions remaining</span>
+                            </div>
+                            <button onclick="useSession(${pkg.id})" 
+                                    class="mt-2 px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                                    ${pkg.remaining_sessions <= 0 ? 'disabled' : ''}>
+                                Use Session
+                            </button>
+                        </div>
+                    `).join('');
                 } else {
-                    document.getElementById('patientPackageStatus').classList.add('hidden');
+                    statusDiv.classList.remove('hidden');
+                    infoDiv.innerHTML = '<p class="text-gray-500">No active packages</p>';
                 }
                 
-                // Show package history
-                showPackageHistory(packages);
-                
-                // Refresh available packages to enable purchase buttons
                 loadAvailablePackages();
-                
             } catch (error) {
                 console.error('Error loading patient packages:', error);
             }
         }
 
-        // Show current active package
-        function showCurrentPackage(package) {
-            const statusDiv = document.getElementById('patientPackageStatus');
-            const infoDiv = document.getElementById('currentPackageInfo');
-            
-            const progressPercentage = ((package.total_sessions - package.sessions_remaining) / package.total_sessions) * 100;
-            
-            infoDiv.innerHTML = `
-                <div class="text-center">
-                    <h3 class="text-lg font-semibold text-blue-600">${package.package_details.name}</h3>
-                    <p class="text-gray-600">Current Package</p>
+        // Purchase package for patient
+        async function purchasePackage(packageId) {
+            if (!currentPatientId) {
+                alert('Please select a patient first');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/patients/${currentPatientId}/subscribe-package`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ package_id: packageId })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('Package purchased successfully!');
+                    loadPatientPackages();
+                } else {
+                    alert('Error purchasing package: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error purchasing package:', error);
+                alert('Error purchasing package');
+            }
+        }
+
+        // Use session from package
+        async function useSession(subscriptionId) {
+            if (!currentPatientId) {
+                alert('Please select a patient first');
+                return;
+            }
+
+            if (confirm('Are you sure you want to use one session from this package?')) {
+                try {
+                    const response = await fetch(`/api/patients/${currentPatientId}/use-session`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ subscription_id: subscriptionId })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Session used successfully!');
+                        loadPatientPackages();
+                    } else {
+                        alert('Error using session: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Error using session:', error);
+                    alert('Error using session');
+                }
+            }
+        }
                 </div>
                 <div class="text-center">
                     <div class="text-3xl font-bold text-green-600">${package.sessions_remaining}</div>
@@ -252,36 +318,6 @@
             historyDiv.classList.remove('hidden');
         }
 
-        // Purchase package
-        async function purchasePackage(packageId) {
-            if (!currentPatientId) {
-                alert('Please select a patient first');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/patients/${currentPatientId}/purchase-package`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ packageId })
-                });
-
-                const result = await response.json();
-                
-                if (result.success) {
-                    alert('Package purchased successfully!');
-                    loadPatientPackages(); // Reload to show new package
-                } else {
-                    alert('Error purchasing package: ' + result.error);
-                }
-            } catch (error) {
-                console.error('Error purchasing package:', error);
-                alert('Error purchasing package');
-            }
-        }
-
         // Open session usage modal
         function openSessionModal(packageId) {
             currentPackageId = packageId;
@@ -319,6 +355,87 @@
             } catch (error) {
                 console.error('Error using session:', error);
                 alert('Error using session');
+            }
+        }
+
+        // Load all user packages
+        async function loadUserPackages() {
+            try {
+                const response = await fetch('/api/user-packages');
+                const userPackages = await response.json();
+                
+                const tableDiv = document.getElementById('userPackagesTable');
+                
+                if (userPackages.length === 0) {
+                    tableDiv.innerHTML = '<p class="text-gray-500 text-center py-4">No user packages found</p>';
+                    return;
+                }
+                
+                tableDiv.innerHTML = `
+                    <table class="min-w-full bg-white">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Package</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Sessions</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remaining</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            ${userPackages.map(pkg => `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">${pkg.first_name} ${pkg.last_name}</div>
+                                        <div class="text-sm text-gray-500">${pkg.email}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm font-medium text-gray-900">${pkg.package_name}</div>
+                                        <div class="text-sm text-gray-500">$${pkg.price}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${pkg.total_sessions}</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="text-sm font-medium ${pkg.remaining_sessions > 0 ? 'text-green-600' : 'text-red-600'}">
+                                            ${pkg.remaining_sessions}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button onclick="useUserSession(${pkg.id})" 
+                                                class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                                                ${pkg.remaining_sessions <= 0 ? 'disabled' : ''}>
+                                            Use Session
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Error loading user packages:', error);
+            }
+        }
+
+        // Use session from user package
+        async function useUserSession(subscriptionId) {
+            if (confirm('Are you sure you want to use one session from this package?')) {
+                try {
+                    const response = await fetch(`/api/user-packages/${subscriptionId}/use-session`, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Session used successfully!');
+                        loadUserPackages(); // Reload to update display
+                    } else {
+                        alert('Error using session: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Error using session:', error);
+                    alert('Error using session');
+                }
             }
         }
     </script>

@@ -164,6 +164,9 @@ function renderAdminView() {
                     <button class="admin-tab-btn border-b-2 border-primary text-primary py-2 px-1 text-sm font-medium" data-tab="users">
                         Users
                     </button>
+                    <button class="admin-tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-2 px-1 text-sm font-medium" data-tab="patients">
+                        Patients
+                    </button>
                     <button class="admin-tab-btn border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 py-2 px-1 text-sm font-medium" data-tab="analytics">
                         Analytics
                     </button>
@@ -214,6 +217,9 @@ function loadAdminTab(tab) {
         case 'users':
             content.innerHTML = renderUsersTab();
             setupUsersTabEvents();
+            break;
+        case 'patients':
+            content.innerHTML = renderPatientsTab();
             break;
         case 'analytics':
             content.innerHTML = renderAnalyticsTab();
@@ -283,6 +289,62 @@ function renderUsersTab() {
                             <tr>
                                 <td colspan="5" class="px-6 py-4 text-center text-gray-500">
                                     No users found
+                                </td>
+                            </tr>
+                        `}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+function renderPatientsTab() {
+    return `
+        <div>
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-medium text-gray-900">Patient Management</h3>
+                <div class="text-sm text-gray-500">
+                    Total Patients: ${adminData.contacts.length}
+                </div>
+            </div>
+            
+            <div class="bg-white shadow overflow-hidden sm:rounded-md">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${adminData.contacts.length > 0 ? adminData.contacts.map(contact => `
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">${contact.name || 'N/A'}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${contact.email || 'N/A'}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">${contact.phone || 'N/A'}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${contact.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                                        ${contact.status || 'lead'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${formatDate(contact.created_at)}
+                                </td>
+                            </tr>
+                        `).join('') : `
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                    No patients found
                                 </td>
                             </tr>
                         `}
@@ -449,8 +511,8 @@ function showAddUserModal() {
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                        <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input type="text" id="name" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary focus:border-primary">
                     </div>
                     
                     <div>
@@ -492,7 +554,7 @@ function showAddUserModal() {
         
         const formData = {
             username: document.getElementById('username').value,
-            email: document.getElementById('email').value,
+            name: document.getElementById('name').value,
             password: document.getElementById('password').value,
             role: document.getElementById('role').value
         };

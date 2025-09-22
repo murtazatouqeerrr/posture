@@ -68,7 +68,7 @@ function renderSubscriptionsView() {
                             <p class="text-gray-600 mt-2">${plan.description}</p>
                             <div class="mt-4">
                                 <span class="text-2xl font-bold text-primary">$${plan.price}</span>
-                                <span class="text-gray-500">/${plan.interval}</span>
+                                <span class="text-gray-500">/${plan.billing_interval}</span>
                             </div>
                             <div class="mt-4 text-sm text-gray-500">
                                 Active subscriptions: ${subscriptionsData.filter(s => s.plan_id === plan.id && s.status === 'active').length}
@@ -106,7 +106,7 @@ function renderSubscriptionsView() {
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <div class="text-sm text-gray-900">${plan ? plan.name : 'Unknown Plan'}</div>
-                                            <div class="text-sm text-gray-500">$${plan ? plan.price : '0'}/${plan ? plan.interval : ''}</div>
+                                            <div class="text-sm text-gray-500">$${plan ? plan.price : '0'}/${plan ? plan.billing_interval : ''}</div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${subscription.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
@@ -234,7 +234,7 @@ function showCreateSubscriptionModal() {
                             <select name="plan_id" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">
                                 <option value="">Select Plan</option>
                                 ${subscriptionPlansData.map(plan => `
-                                    <option value="${plan.id}">${plan.name} - $${plan.price}/${plan.interval}</option>
+                                    <option value="${plan.id}">${plan.name} - $${plan.price}/${plan.billing_interval}</option>
                                 `).join('')}
                             </select>
                         </div>

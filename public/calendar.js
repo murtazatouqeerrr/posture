@@ -5,9 +5,7 @@ let contacts = [];
 
 async function loadCalendarView() {
     console.log('📅 Loading calendar view...');
-    
     try {
-        // Fetch appointments and contacts
         const [appointmentsResponse, contactsResponse] = await Promise.all([
             fetch('/api/appointments'),
             fetch('/api/contacts')
@@ -22,9 +20,26 @@ async function loadCalendarView() {
 
         appointments = await appointmentsResponse.json();
         contacts = await contactsResponse.json();
-        
-        console.log(`✅ Loaded ${appointments.length} appointments and ${contacts.length} contacts`);
 
+        // Map fields for compatibility
+        appointments = appointments.map(apt => {
+            if (apt.date_time) {
+                const [date, time] = apt.date_time.split('T');
+                apt.appointment_date = date;
+                apt.appointment_time = time ? time.slice(0,5) : '';
+            }
+            if (apt.type) {
+                apt.service_type = apt.type;
+            }
+            const contact = contacts.find(c => c.id === apt.contact_id);
+            if (contact) {
+                apt.first_name = contact.first_name;
+                apt.last_name = contact.last_name;
+            }
+            return apt;
+        });
+
+        console.log(`✅ Loaded ${appointments.length} appointments and ${contacts.length} contacts`);
         renderCalendarView();
     } catch (error) {
         console.error('❌ Calendar loading error:', error);
@@ -41,6 +56,7 @@ async function loadCalendarView() {
         `;
     }
 }
+
 
 function renderCalendarView() {
     const app = document.getElementById('app');
@@ -341,14 +357,18 @@ function showAddAppointmentModal() {
     document.getElementById('appointmentForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const formData = {
-            contact_id: document.getElementById('contactId').value,
-            appointment_date: document.getElementById('appointmentDate').value,
-            appointment_time: document.getElementById('appointmentTime').value,
-            service_type: document.getElementById('serviceType').value,
-            notes: document.getElementById('appointmentNotes').value,
-            status: 'Scheduled'
-        };
+      // Combine date and time into one string
+const date = document.getElementById('appointmentDate').value;
+const time = document.getElementById('appointmentTime').value;
+const date_time = `${date}T${time}`; // ISO format
+
+const formData = {
+    contact_id: document.getElementById('contactId').value,
+    date_time: date_time,
+    type: document.getElementById('serviceType').value,
+    notes: document.getElementById('appointmentNotes').value,
+    status: 'Scheduled'
+};
 
         try {
             const response = await fetch('/api/appointments', {

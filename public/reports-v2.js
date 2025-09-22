@@ -1,4 +1,4 @@
-// Reports Management - Fixed Data Fetching
+// Reports data
 let reportsData = {
     leadsPerMonth: [],
     conversionRate: [],
@@ -48,7 +48,7 @@ async function loadReportsView() {
         console.error('❌ Reports loading error:', error);
         document.getElementById('app').innerHTML = `
             <div class="p-6">
-                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
                     <h3 class="text-red-800 font-medium">Error Loading Reports</h3>
                     <p class="text-red-700 mt-2">${error.message}</p>
                     <button onclick="loadReportsView()" class="mt-3 bg-red-100 px-3 py-2 rounded text-red-800 hover:bg-red-200">
@@ -71,8 +71,8 @@ function renderReportsView() {
                 <p class="text-gray-600">Comprehensive insights into your practice performance</p>
             </div>
 
-            <!-- Financial Overview Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
                         <div class="p-2 bg-green-100 rounded-lg">
@@ -117,9 +117,9 @@ function renderReportsView() {
                 
                 <div class="bg-white rounded-lg shadow p-6">
                     <div class="flex items-center">
-                        <div class="p-2 bg-yellow-100 rounded-lg">
-                            <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        <div class="p-2 bg-orange-100 rounded-lg">
+                            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
                         </div>
                         <div class="ml-4">
@@ -130,28 +130,9 @@ function renderReportsView() {
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <!-- Revenue Trends Chart -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Revenue Trends</h3>
-                    <div class="h-64">
-                        <canvas id="revenueChart"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Revenue by Service Chart -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Revenue by Service</h3>
-                    <div class="h-64">
-                        <canvas id="serviceChart"></canvas>
-                    </div>
-                </div>
-            </div>
-
             <!-- Invoice Status Overview -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Invoice Status Overview</h3>
+            <div class="bg-white rounded-lg shadow p-6 mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Invoice Status Overview</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="text-center p-4 bg-green-50 rounded-lg">
                         <p class="text-2xl font-bold text-green-600">${analytics.paidInvoices || 0}</p>
@@ -167,13 +148,23 @@ function renderReportsView() {
                     </div>
                 </div>
             </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue Trends</h3>
+                    <canvas id="revenueChart" width="400" height="200"></canvas>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Service Distribution</h3>
+                    <canvas id="serviceChart" width="400" height="200"></canvas>
+                </div>
+            </div>
         </div>
     `;
-
+    
     // Initialize charts after DOM is ready
-    setTimeout(() => {
-        initializeCharts();
-    }, 100);
+    setTimeout(initializeCharts, 100);
 }
 
 function initializeCharts() {
@@ -181,14 +172,14 @@ function initializeCharts() {
     
     // Revenue Trends Chart
     const revenueCtx = document.getElementById('revenueChart');
-    if (revenueCtx && reportsData.revenuePerMonth) {
+    if (revenueCtx && typeof Chart !== 'undefined') {
         new Chart(revenueCtx, {
             type: 'line',
             data: {
-                labels: reportsData.revenuePerMonth.map(item => item.month || 'N/A'),
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
                 datasets: [{
-                    label: 'Revenue ($)',
-                    data: reportsData.revenuePerMonth.map(item => item.revenue || 0),
+                    label: 'Revenue',
+                    data: reportsData.revenuePerMonth.map(item => item.revenue) || [1200, 1900, 3000, 5000, 2000, 3000],
                     borderColor: 'rgb(59, 130, 246)',
                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     tension: 0.4
@@ -196,7 +187,11 @@ function initializeCharts() {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
                 scales: {
                     y: {
                         beginAtZero: true,
@@ -211,31 +206,32 @@ function initializeCharts() {
         });
     }
     
-    // Revenue by Service Chart
+    // Service Distribution Chart
     const serviceCtx = document.getElementById('serviceChart');
-    if (serviceCtx) {
+    if (serviceCtx && typeof Chart !== 'undefined') {
         const serviceData = analytics.revenueByService || [
             { service: 'Initial Assessment', revenue: 450 },
             { service: '1-on-1 Treatment', revenue: 800 },
-            { service: 'Package Plans', revenue: 1200 }
+            { service: 'Group Sessions', revenue: 300 },
+            { service: 'Follow-up', revenue: 200 }
         ];
         
         new Chart(serviceCtx, {
             type: 'doughnut',
             data: {
-                labels: serviceData.map(item => item.service || 'Unknown'),
+                labels: serviceData.map(item => item.service),
                 datasets: [{
-                    data: serviceData.map(item => parseFloat(item.revenue) || 0),
+                    data: serviceData.map(item => item.revenue),
                     backgroundColor: [
                         'rgba(59, 130, 246, 0.8)',
                         'rgba(16, 185, 129, 0.8)',
-                        'rgba(245, 158, 11, 0.8)'
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)'
                     ]
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'bottom'

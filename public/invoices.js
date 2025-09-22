@@ -136,14 +136,14 @@ function renderInvoicesView() {
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">#${invoice.id}</div>
-                                        <div class="text-sm text-gray-500">${formatDate(invoice.invoice_date)}</div>
+                                <div class="text-sm text-gray-500">${formatDate(invoice.created_at)}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">${invoice.first_name} ${invoice.last_name}</div>
                                         <div class="text-sm text-gray-500">${invoice.email}</div>
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900 max-w-xs truncate">${invoice.service_description}</div>
+                                        <div class="text-sm text-gray-900 max-w-xs truncate">${invoice.description}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-gray-900">$${invoice.amount}</div>
@@ -209,7 +209,7 @@ function showAddInvoiceModal() {
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Service Description</label>
-                            <textarea name="service_description" required rows="3" 
+                            <textarea name="description" required rows="3" 
                                       class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary"></textarea>
                         </div>
                         
@@ -253,7 +253,7 @@ async function createInvoice(formData) {
     try {
         const data = {
             contact_id: formData.get('contact_id'),
-            service_description: formData.get('service_description'),
+            description: formData.get('description'),
             amount: formData.get('amount'),
             due_date: formData.get('due_date')
         };
@@ -318,7 +318,7 @@ function showInvoiceViewModal(invoice) {
                         
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Service</label>
-                            <p class="mt-1 text-sm text-gray-900">${invoice.service_description}</p>
+                            <p class="mt-1 text-sm text-gray-900">${invoice.description}</p>
                         </div>
                         
                         <div class="grid grid-cols-2 gap-4">
@@ -381,8 +381,8 @@ function showEditInvoiceModal(invoice) {
                     <form id="editInvoiceForm" class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">Service Description</label>
-                            <textarea name="service_description" required rows="3" 
-                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">${invoice.service_description}</textarea>
+                            <textarea name="description" required rows="3" 
+                                      class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-primary focus:border-primary">${invoice.description}</textarea>
                         </div>
                         
                         <div>
@@ -427,7 +427,7 @@ function showEditInvoiceModal(invoice) {
 async function updateInvoice(invoiceId, formData) {
     try {
         const data = {
-            service_description: formData.get('service_description'),
+            description: formData.get('description'),
             amount: formData.get('amount'),
             status: formData.get('status')
         };
