@@ -16,6 +16,17 @@ app.use(express.json());
 app.use(express.static('public'));
 console.log('✅ Middleware configured');
 
+// Helper function to format currency
+function formatCurrency(amount) {
+    const num = parseFloat(amount) || 0;
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+        return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toFixed(0);
+}
+
 // Try to load SQLite, fallback to mock data if it fails
 let db = null;
 let usingSQLite = false;
@@ -741,22 +752,22 @@ app.get('/api/admin/analytics/financial', (req, res) => {
                 db.get('SELECT COUNT(*) as pending_invoices FROM invoices WHERE status != \'Paid\'', (err, pending) => {
                     console.log('✅ Financial analytics calculated from database');
                     res.json({
-                        totalRevenue: revenue?.total_revenue || 0,
+                        total_revenue: formatCurrency(revenue?.total_revenue || 0),
                         monthlyGrowth: 0.12,
                         activePatients: patients?.total_patients || 0,
                         pendingInvoices: pending?.pending_invoices || 0,
-                        monthlyRecurringRevenue: (revenue?.total_revenue || 0) / 12
+                        monthly_recurring_revenue: formatCurrency((revenue?.total_revenue || 0) / 12)
                     });
                 });
             });
         });
     } else {
         res.json({
-            totalRevenue: 14500,
+            total_revenue: formatCurrency(14500),
             monthlyGrowth: 0.12,
             activePatients: 45,
             pendingInvoices: 8,
-            monthlyRecurringRevenue: 2400
+            monthly_recurring_revenue: formatCurrency(2400)
         });
     }
 });

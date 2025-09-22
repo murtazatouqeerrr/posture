@@ -15,4 +15,4 @@ check-undefined.js
 create_db.js
 test-*.js
 server-*.js
-!server-final-working.js
+!api/

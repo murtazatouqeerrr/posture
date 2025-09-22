@@ -202,7 +202,28 @@ function initializeCharts() {
                         beginAtZero: true,
                         ticks: {
                             callback: function(value) {
+                                // Format large numbers
+                                if (value >= 1000000) {
+                                    return '$' + (value / 1000000).toFixed(1) + 'M';
+                                } else if (value >= 1000) {
+                                    return '$' + (value / 1000).toFixed(1) + 'K';
+                                }
                                 return '$' + value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                if (value >= 1000000) {
+                                    return 'Revenue: $' + (value / 1000000).toFixed(1) + 'M';
+                                } else if (value >= 1000) {
+                                    return 'Revenue: $' + (value / 1000).toFixed(1) + 'K';
+                                }
+                                return 'Revenue: $' + value;
                             }
                         }
                     }
